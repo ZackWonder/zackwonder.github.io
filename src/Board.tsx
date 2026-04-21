@@ -1,0 +1,96 @@
+import "./Board.css";
+import constants, { type Player } from "./constants";
+import useSound from "./useSound";
+
+interface SquareProps {
+  value: Player | undefined;
+  winned: boolean;
+  isLastStep: boolean;
+  aTurn: boolean;
+  onClick: () => void;
+}
+
+function Square({ value, winned, isLastStep, aTurn, onClick }: SquareProps) {
+  let cn = "square";
+  if (value !== undefined) {
+    cn += value === constants.PLAYER_A ? " playerA" : " playerB";
+    if (winned) {
+      cn += " winned";
+    }
+  }
+
+  const [playActive] = useSound("./pop-down.mp3", { volume: 0.25 });
+  const [playOn] = useSound("./pop-up-on.mp3", { volume: 0.25 });
+  const [playOff] = useSound("./pop-up-off.mp3", { volume: 0.25 });
+
+  return (
+    <span>
+      {isLastStep && !winned && <span className="lastStep"></span>}
+      <button
+        className={cn}
+        onClick={onClick}
+        onMouseDown={() => playActive()}
+        onMouseUp={() => {
+          if (aTurn) {
+            playOn();
+          } else {
+            playOff();
+          }
+        }}
+      ></button>
+    </span>
+  );
+}
+
+type Point = [number, number];
+
+interface BoardProps {
+  w: number;
+  h: number;
+  squares: (Player | undefined)[][];
+  lastStep: Point | undefined;
+  aTurn: boolean;
+  winPoints: Point[] | undefined;
+  onClick: (i: number, j: number) => void;
+}
+
+export default function Board({
+  w,
+  h,
+  squares,
+  lastStep,
+  aTurn,
+  winPoints,
+  onClick,
+}: BoardProps) {
+  const rows = [];
+  for (let row = h - 1; row >= 0; --row) {
+    const cols = [];
+    for (let col = 0; col < w; ++col) {
+      const pointValue = squares[col]![row];
+      let winned = false;
+      if (winPoints && pointValue) {
+        winned = winPoints.some((v) => v[0] === col && v[1] === row);
+      }
+      const isLastStep =
+        lastStep !== undefined && lastStep[0] === col && lastStep[1] === row;
+
+      cols.push(
+        <Square
+          key={col * w + row}
+          value={pointValue}
+          winned={winned}
+          isLastStep={isLastStep}
+          aTurn={aTurn}
+          onClick={() => onClick(col, row)}
+        />
+      );
+    }
+    rows.push(
+      <div key={row} className="board-row">
+        {cols}
+      </div>
+    );
+  }
+  return <div>{rows}</div>;
+}
