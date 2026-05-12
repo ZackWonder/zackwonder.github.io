@@ -28,13 +28,13 @@
 
 .playerA {
   /* background: red; */
-  background-image: url("./tanson.jpg");
+  background-image: var(--playerA-img);
   border: 5px solid rgb(82, 140, 247);
 }
 
 .playerB {
   /* background: yellow; */
-  background-image: url("./sherly.jpg");
+  background-image: var(--playerB-img);
   border: 5px solid rgb(255, 147, 165);
 }
 

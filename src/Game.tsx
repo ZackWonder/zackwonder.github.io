@@ -21,6 +21,24 @@ function playWinSound(winner: Winner) {
   }
 }
 
+function loadLevel(key: string): number {
+  const raw = localStorage.getItem(key)
+  const n = raw === null ? NaN : parseInt(raw, 10)
+  return Number.isFinite(n) && n >= 0 ? n : 0
+}
+
+function tryUpgrade(
+  name: 'tanson' | 'sherly',
+  currentLevel: number,
+  setLevel: (n: number) => void
+): void {
+  const next = currentLevel + 1
+  const img = new Image()
+  img.onload = () => setLevel(next)
+  img.onerror = () => {}
+  img.src = `/${name}_${next}.jpg`
+}
+
 function Crown({
   value,
   handlePlayAgain,
@@ -149,6 +167,16 @@ export default function GameApp() {
   const [winner, setWinner] = useState<Winner | undefined>(undefined)
   const [winPoints, setWinPoints] = useState<Point[] | undefined>(undefined)
   const [droppingCell, setDroppingCell] = useState<Point | null>(null)
+  const [aLevel, setALevel] = useState<number>(() => loadLevel('tansonLevel'))
+  const [bLevel, setBLevel] = useState<number>(() => loadLevel('sherlyLevel'))
+
+  useEffect(() => {
+    localStorage.setItem('tansonLevel', String(aLevel))
+  }, [aLevel])
+
+  useEffect(() => {
+    localStorage.setItem('sherlyLevel', String(bLevel))
+  }, [bLevel])
 
   const handlePlayAgain = useCallback(() => {
     setSquares(createEmptyBoard())
@@ -186,6 +214,11 @@ export default function GameApp() {
 
         if (newWinner !== undefined) {
           playWinSound(newWinner)
+          if (newWinner === constants.PLAYER_A) {
+            tryUpgrade('tanson', aLevel, setALevel)
+          } else if (newWinner === constants.PLAYER_B) {
+            tryUpgrade('sherly', bLevel, setBLevel)
+          }
         }
 
         setDroppingCell([i, droppedJ])
@@ -198,7 +231,7 @@ export default function GameApp() {
         setWinPoints(newWinPoints ?? undefined)
       }
     },
-    [squares, history, aTurn, winner]
+    [squares, history, aTurn, winner, aLevel, bLevel]
   )
 
   const handleUndo = useCallback(() => {
@@ -214,7 +247,13 @@ export default function GameApp() {
   const lastStep = history.length > 0 ? history[history.length - 1] : undefined
 
   return (
-    <div className="App">
+    <div
+      className="App"
+      style={{
+        ['--playerA-img' as never]: `url('/tanson_${aLevel}.jpg')`,
+        ['--playerB-img' as never]: `url('/sherly_${bLevel}.jpg')`,
+      } as React.CSSProperties}
+    >
       <header className="App-header">
         <Crown value={winner} handlePlayAgain={handlePlayAgain} />
         <Board
