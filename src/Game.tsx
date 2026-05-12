@@ -21,22 +21,35 @@ function playWinSound(winner: Winner) {
   }
 }
 
-function loadLevel(key: string): number {
-  const raw = localStorage.getItem(key)
-  const n = raw === null ? NaN : parseInt(raw, 10)
-  return Number.isFinite(n) && n >= 0 ? n : 0
+type AvatarSlot = {
+  name: 'tanson' | 'sherly'
+  level: number
+  setLevel: (n: number) => void
 }
 
-function tryUpgrade(
-  name: 'tanson' | 'sherly',
-  currentLevel: number,
-  setLevel: (n: number) => void
-): void {
-  const next = currentLevel + 1
-  const img = new Image()
-  img.onload = () => setLevel(next)
-  img.onerror = () => {}
-  img.src = `/${name}_${next}.jpg`
+function probeNextLevel(slot: AvatarSlot): Promise<boolean> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve(true)
+    img.onerror = () => resolve(false)
+    img.src = `/${slot.name}_${slot.level + 1}.jpg`
+  })
+}
+
+async function tryUpgradeOrReset(
+  winner: AvatarSlot,
+  loser: AvatarSlot
+): Promise<void> {
+  const winnerHasNext = await probeNextLevel(winner)
+  if (winnerHasNext) {
+    winner.setLevel(winner.level + 1)
+    return
+  }
+  const loserHasNext = await probeNextLevel(loser)
+  if (!loserHasNext) {
+    winner.setLevel(0)
+    loser.setLevel(0)
+  }
 }
 
 function Crown({
@@ -167,16 +180,8 @@ export default function GameApp() {
   const [winner, setWinner] = useState<Winner | undefined>(undefined)
   const [winPoints, setWinPoints] = useState<Point[] | undefined>(undefined)
   const [droppingCell, setDroppingCell] = useState<Point | null>(null)
-  const [aLevel, setALevel] = useState<number>(() => loadLevel('tansonLevel'))
-  const [bLevel, setBLevel] = useState<number>(() => loadLevel('sherlyLevel'))
-
-  useEffect(() => {
-    localStorage.setItem('tansonLevel', String(aLevel))
-  }, [aLevel])
-
-  useEffect(() => {
-    localStorage.setItem('sherlyLevel', String(bLevel))
-  }, [bLevel])
+  const [aLevel, setALevel] = useState<number>(0)
+  const [bLevel, setBLevel] = useState<number>(0)
 
   const handlePlayAgain = useCallback(() => {
     setSquares(createEmptyBoard())
@@ -214,10 +219,12 @@ export default function GameApp() {
 
         if (newWinner !== undefined) {
           playWinSound(newWinner)
+          const slotA: AvatarSlot = { name: 'tanson', level: aLevel, setLevel: setALevel }
+          const slotB: AvatarSlot = { name: 'sherly', level: bLevel, setLevel: setBLevel }
           if (newWinner === constants.PLAYER_A) {
-            tryUpgrade('tanson', aLevel, setALevel)
+            void tryUpgradeOrReset(slotA, slotB)
           } else if (newWinner === constants.PLAYER_B) {
-            tryUpgrade('sherly', bLevel, setBLevel)
+            void tryUpgradeOrReset(slotB, slotA)
           }
         }
 
