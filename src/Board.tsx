@@ -6,16 +6,21 @@ interface SquareProps {
   value: Player | undefined;
   winned: boolean;
   isLastStep: boolean;
+  isDropping: boolean;
+  dropRows: number;
   aTurn: boolean;
   onClick: () => void;
 }
 
-function Square({ value, winned, isLastStep, aTurn, onClick }: SquareProps) {
+function Square({ value, winned, isLastStep, isDropping, dropRows, aTurn, onClick }: SquareProps) {
   let cn = "square";
   if (value !== undefined) {
     cn += value === constants.PLAYER_A ? " playerA" : " playerB";
     if (winned) {
       cn += " winned";
+    }
+    if (isDropping) {
+      cn += " dropping";
     }
   }
 
@@ -28,6 +33,7 @@ function Square({ value, winned, isLastStep, aTurn, onClick }: SquareProps) {
       {isLastStep && !winned && <span className="lastStep"></span>}
       <button
         className={cn}
+        style={isDropping ? { '--drop-rows': dropRows } as React.CSSProperties : undefined}
         onClick={onClick}
         onMouseDown={() => playActive()}
         onMouseUp={() => {
@@ -49,6 +55,7 @@ interface BoardProps {
   h: number;
   squares: (Player | undefined)[][];
   lastStep: Point | undefined;
+  droppingCell: Point | null;
   aTurn: boolean;
   winPoints: Point[] | undefined;
   onClick: (i: number, j: number) => void;
@@ -59,6 +66,7 @@ export default function Board({
   h,
   squares,
   lastStep,
+  droppingCell,
   aTurn,
   winPoints,
   onClick,
@@ -74,6 +82,8 @@ export default function Board({
       }
       const isLastStep =
         lastStep !== undefined && lastStep[0] === col && lastStep[1] === row;
+      const isDropping =
+        droppingCell !== null && droppingCell[0] === col && droppingCell[1] === row;
 
       cols.push(
         <Square
@@ -81,6 +91,8 @@ export default function Board({
           value={pointValue}
           winned={winned}
           isLastStep={isLastStep}
+          isDropping={isDropping}
+          dropRows={constants.HEIGHT - 1 - row}
           aTurn={aTurn}
           onClick={() => onClick(col, row)}
         />

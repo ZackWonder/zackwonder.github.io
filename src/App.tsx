@@ -1,229 +1,90 @@
-import { useState, useEffect, useCallback } from "react";
-import constants, { type Player } from "./constants";
-import "./App.css";
-import Board from "./Board";
-import PlayAffect from "./effect";
-
-type Point = [number, number];
-type Winner = Player | 3;
-
-function playWinSound(winner: Winner) {
-  const soundMap: Record<number, string> = {
-    [constants.PLAYER_A]: "./tansonwin.mp3",
-    [constants.PLAYER_B]: "./sherlywin.mp3",
-    3: "./allwin.mp3",
-  };
-  const url = soundMap[winner];
-  if (url) {
-    const audio = new Audio(url);
-    audio.volume = 0.25;
-    audio.play().catch(() => {});
-  }
-}
-
-function Crown({
-  value,
-  handlePlayAgain,
-}: {
-  value: Winner | undefined;
-  handlePlayAgain: () => void;
-}) {
-  useEffect(() => {
-    if (value) {
-      const btn = document.querySelector(".crownSpan");
-      if (btn instanceof HTMLElement) {
-        PlayAffect(btn);
-      }
-    }
-  }, [value]);
-
-  if (!value) return null;
-
-  if (value !== 3) {
-    const cn =
-      value === constants.PLAYER_A ? "playerA crown" : "playerB crown";
-    return (
-      <div className="crownDiv">
-        <span className="crownSpan">
-          <button className={cn}></button>
-        </span>
-        <br />
-        贏了！
-        <br />
-        <button id="playAgainBtn" onClick={handlePlayAgain}>
-          再玩一次
-        </button>
-        <hr />
-      </div>
-    );
-  }
-
-  return (
-    <div className="crownDiv">
-      <span className="crownSpan">
-        <button className="playerA crown"></button>
-        <button className="playerB crown"></button>
-      </span>
-      <br />
-      <button id="playAgainBtn" onClick={handlePlayAgain}>
-        再玩一次
-      </button>
-      <hr />
-    </div>
-  );
-}
-
-function createEmptyBoard(): (Player | undefined)[][] {
-  return Array.from({ length: constants.WIDTH }, () =>
-    new Array<Player | undefined>(constants.HEIGHT).fill(undefined)
-  );
-}
-
-function drop(player: Player, col: (Player | undefined)[]): number | undefined {
-  for (let i = 0; i < col.length; i++) {
-    if (col[i] === undefined) {
-      col[i] = player;
-      return i;
-    }
-  }
-  return undefined;
-}
-
-function linePoints(
-  square: (Player | undefined)[][],
-  x1: number,
-  y1: number,
-  dx: number,
-  dy: number
-): Point[] {
-  const points: Point[] = [[x1, y1]];
-  const v = square[x1]![y1];
-  for (
-    let i = x1 + dx, j = y1 + dy;
-    i < constants.WIDTH && i >= 0 && j < constants.HEIGHT && j >= 0;
-    i += dx, j += dy
-  ) {
-    if (square[i]![j] === v) {
-      points.push([i, j]);
-    } else {
-      break;
-    }
-  }
-  for (
-    let i = x1 - dx, j = y1 - dy;
-    i < constants.WIDTH && i >= 0 && j < constants.HEIGHT && j >= 0;
-    i -= dx, j -= dy
-  ) {
-    if (square[i]![j] === v) {
-      points.push([i, j]);
-    } else {
-      break;
-    }
-  }
-  return points;
-}
-
-function isLine4(
-  square: (Player | undefined)[][],
-  x1: number,
-  y1: number
-): Point[] | undefined {
-  const directions: [number, number][] = [
-    [1, 0],
-    [0, 1],
-    [1, 1],
-    [1, -1],
-  ];
-  for (const [dx, dy] of directions) {
-    const points = linePoints(square, x1, y1, dx, dy);
-    if (points.length >= 4) return points;
-  }
-  return undefined;
-}
+import { useState, useEffect, useCallback } from 'react'
+import './App.css'
+import './resume.css'
+import NavBar from './components/NavBar'
+import Resume from './components/Resume'
+import GameApp from './Game'
+import { en } from './data/en'
+import { zh } from './data/zh'
 
 export default function App() {
-  const [squares, setSquares] = useState(createEmptyBoard);
-  const [history, setHistory] = useState<Point[]>([]);
-  const [aTurn, setATurn] = useState(true);
-  const [aIsStarter, setAIsStarter] = useState(true);
-  const [winner, setWinner] = useState<Winner | undefined>(undefined);
-  const [winPoints, setWinPoints] = useState<Point[] | undefined>(undefined);
+  const [locale, setLocale] = useState<'en' | 'zh'>(() =>
+    (localStorage.getItem('locale') as 'en' | 'zh') || 'en'
+  )
+  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
+    (localStorage.getItem('theme') as 'dark' | 'light') || 'dark'
+  )
+  const [showGame, setShowGame] = useState(() => window.location.hash === '#game')
+  const [transitioning, setTransitioning] = useState(false)
 
-  const handlePlayAgain = useCallback(() => {
-    setSquares(createEmptyBoard());
-    setHistory([]);
-    setATurn(!aIsStarter);
-    setAIsStarter((prev) => !prev);
-    setWinner(undefined);
-    setWinPoints(undefined);
-  }, [aIsStarter]);
+  const data = locale === 'en' ? en : zh
 
-  const handleClick = useCallback(
-    (i: number, _j: number) => {
-      if (winner !== undefined || squares[i]![constants.HEIGHT - 1] !== undefined) {
-        return;
-      }
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('theme', theme)
+  }, [theme])
 
-      const newSquares = squares.map((col) => [...col]);
-      const droppedJ = drop(
-        aTurn ? constants.PLAYER_A : constants.PLAYER_B,
-        newSquares[i]!
-      );
+  useEffect(() => {
+    localStorage.setItem('locale', locale)
+  }, [locale])
 
-      if (droppedJ !== undefined) {
-        const newHistory = [...history, [i, droppedJ] as Point];
-        let newWinner: Winner | undefined = undefined;
-        let newWinPoints = isLine4(newSquares, i, droppedJ);
-        if (newWinPoints) {
-          newWinner = aTurn ? constants.PLAYER_A : constants.PLAYER_B;
-        } else if (
-          newSquares.every((col) => col[constants.HEIGHT - 1] !== undefined)
-        ) {
-          newWinner = 3;
-        }
+  useEffect(() => {
+    const onHashChange = () => {
+      setShowGame(window.location.hash === '#game')
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
 
-        if (newWinner !== undefined) {
-          playWinSound(newWinner);
-        }
+  const toggleLocale = useCallback(() => {
+    setLocale((prev) => (prev === 'en' ? 'zh' : 'en'))
+  }, [])
 
-        setSquares(newSquares);
-        setHistory(newHistory);
-        setATurn(!aTurn);
-        setWinner(newWinner);
-        setWinPoints(newWinPoints ?? undefined);
-      }
-    },
-    [squares, history, aTurn, winner]
-  );
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
+  }, [])
 
-  const handleUndo = useCallback(() => {
-    if (history.length === 0) return;
-    const last = history[history.length - 1]!;
-    const newSquares = squares.map((col) => [...col]);
-    newSquares[last[0]]![last[1]] = undefined;
-    setSquares(newSquares);
-    setHistory(history.slice(0, -1));
-    setATurn(!aTurn);
-  }, [squares, history, aTurn]);
+  const handleHeartClick = useCallback(() => {
+    setTransitioning(true)
+    setTimeout(() => {
+      window.location.hash = '#game'
+      setTransitioning(false)
+    }, 300)
+  }, [])
 
-  const lastStep = history.length > 0 ? history[history.length - 1] : undefined;
+  const handleBackClick = useCallback(() => {
+    setTransitioning(true)
+    setTimeout(() => {
+      history.replaceState(null, '', window.location.pathname)
+      setShowGame(false)
+      setTransitioning(false)
+    }, 300)
+  }, [])
+
+  if (showGame) {
+    return (
+      <div className={`game-wrapper ${transitioning ? 'page-exit' : 'page-enter'}`}>
+        <button className="game-back-btn" onClick={handleBackClick}>
+          {data.labels.back}
+        </button>
+        <div className="game-content">
+          <div className="game-title">For my loves</div>
+          <GameApp />
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <Crown value={winner} handlePlayAgain={handlePlayAgain} />
-        <Board
-          w={constants.WIDTH}
-          h={constants.HEIGHT}
-          squares={squares}
-          lastStep={lastStep}
-          aTurn={aTurn}
-          winPoints={winPoints}
-          onClick={handleClick}
-        />
-        <hr />
-        {!winner && <button onClick={handleUndo}>悔棋</button>}
-      </header>
+    <div className={transitioning ? 'page-exit' : 'page-enter'}>
+      <NavBar
+        locale={locale}
+        theme={theme}
+        onLocaleToggle={toggleLocale}
+        onThemeToggle={toggleTheme}
+        onHeartClick={handleHeartClick}
+      />
+      <Resume data={data} />
     </div>
-  );
+  )
 }
