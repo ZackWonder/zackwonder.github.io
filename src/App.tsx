@@ -7,6 +7,15 @@ import GameApp from './Game'
 import { en } from './data/en'
 import { zh } from './data/zh'
 
+type PageMode = 'resume' | 'game' | 'play'
+
+function detectMode(): PageMode {
+  const hash = window.location.hash
+  if (hash.startsWith('#play')) return 'play'
+  if (hash.startsWith('#game')) return 'game'
+  return 'resume'
+}
+
 export default function App() {
   const [locale, setLocale] = useState<'en' | 'zh'>(() =>
     (localStorage.getItem('locale') as 'en' | 'zh') || 'en'
@@ -14,7 +23,7 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     (localStorage.getItem('theme') as 'dark' | 'light') || 'dark'
   )
-  const [showGame, setShowGame] = useState(() => window.location.hash.startsWith('#game'))
+  const [mode, setMode] = useState<PageMode>(detectMode)
   const [transitioning, setTransitioning] = useState(false)
 
   const data = locale === 'en' ? en : zh
@@ -29,9 +38,7 @@ export default function App() {
   }, [locale])
 
   useEffect(() => {
-    const onHashChange = () => {
-      setShowGame(window.location.hash.startsWith('#game'))
-    }
+    const onHashChange = () => setMode(detectMode())
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
@@ -56,17 +63,20 @@ export default function App() {
     setTransitioning(true)
     setTimeout(() => {
       history.replaceState(null, '', window.location.pathname)
-      setShowGame(false)
+      setMode('resume')
       setTransitioning(false)
     }, 300)
   }, [])
 
-  if (showGame) {
+  if (mode === 'game' || mode === 'play') {
+    const showBack = mode === 'game'
     return (
       <div className={`game-wrapper ${transitioning ? 'page-exit' : 'page-enter'}`}>
-        <button className="game-back-btn" onClick={handleBackClick}>
-          {data.labels.back}
-        </button>
+        {showBack && (
+          <button className="game-back-btn" onClick={handleBackClick}>
+            {data.labels.back}
+          </button>
+        )}
         <div className="game-content">
           <div className="game-title">For my loves</div>
           <GameApp />
