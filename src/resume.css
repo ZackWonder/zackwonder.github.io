@@ -456,11 +456,7 @@
   letter-spacing: 2px;
 }
 
-.game-back-btn {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 300;
+.game-wrapper button:not(.square):not(.crown):not(.playerA):not(.playerB):not([class*="invite-"]) {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #e6edf3;
@@ -471,9 +467,16 @@
   transition: border-color 0.2s, background 0.2s;
 }
 
-.game-back-btn:hover {
+.game-wrapper button:not(.square):not(.crown):not(.playerA):not(.playerB):not([class*="invite-"]):hover {
   border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.15);
+}
+
+.game-back-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 300;
 }
 
 /* ============================================================
