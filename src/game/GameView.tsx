@@ -103,11 +103,13 @@ export default function GameView({
           winPoints={state.winPoints}
           onClick={(i) => onColumnClick(i)}
         />
-        {notice && (
-          <div key={notice.id} className="game-notice">
-            {notice.text}
-          </div>
-        )}
+        <div className="game-notice-slot">
+          {notice && (
+            <div key={notice.id} className="game-notice">
+              {notice.text}
+            </div>
+          )}
+        </div>
         <hr />
         {!state.winner && onUndo && <button onClick={onUndo}>悔棋</button>}
         {extraControls}
