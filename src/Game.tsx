@@ -25,14 +25,16 @@ export default function GameApp() {
   if (mode.kind === "single") {
     return (
       <GameContainer
-        extraControls={
-          <button
-            id="p2pBtn"
-            style={{ marginLeft: 8 }}
-            onClick={() => setMode({ kind: "host" })}
-          >
-            🔗 P2P 对战
-          </button>
+        renderExtraControls={(s) =>
+          s.history.length === 0 ? (
+            <button
+              id="p2pBtn"
+              style={{ marginLeft: 8 }}
+              onClick={() => setMode({ kind: "host" })}
+            >
+              🔗 P2P 对战
+            </button>
+          ) : null
         }
       />
     );

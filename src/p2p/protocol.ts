@@ -2,8 +2,7 @@ export type PlayerRole = "A" | "B";
 
 export type PeerMessage =
   | { type: "move"; col: number; seq: number }
-  | { type: "reset"; seq: number }
-  | { type: "hello"; role: PlayerRole };
+  | { type: "reset"; seq: number };
 
 const COLOR_TO_ROLE: Record<string, PlayerRole> = { blue: "A", red: "B" };
 const ROLE_TO_COLOR: Record<PlayerRole, "blue" | "red"> = { A: "blue", B: "red" };
@@ -36,10 +35,6 @@ export function isPeerMessage(value: unknown): value is PeerMessage {
   if (v.type === "reset") {
     const m = value as { seq?: unknown };
     return typeof m.seq === "number";
-  }
-  if (v.type === "hello") {
-    const m = value as { role?: unknown };
-    return m.role === "A" || m.role === "B";
   }
   return false;
 }

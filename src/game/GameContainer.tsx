@@ -55,11 +55,17 @@ export interface GameContainerTransport {
 
 export interface GameContainerProps {
   extraControls?: React.ReactNode;
+  renderExtraControls?: (state: GameState) => React.ReactNode;
   topBanner?: React.ReactNode;
   transport?: GameContainerTransport;
 }
 
-export default function GameContainer({ extraControls, topBanner, transport }: GameContainerProps) {
+export default function GameContainer({
+  extraControls,
+  renderExtraControls,
+  topBanner,
+  transport,
+}: GameContainerProps) {
   const [state, setState] = useState<GameState>(() => createInitialState(true));
   const [aLevel, setALevel] = useState(0);
   const [bLevel, setBLevel] = useState(0);
@@ -139,7 +145,7 @@ export default function GameContainer({ extraControls, topBanner, transport }: G
       onColumnClick={handleColumnClick}
       onPlayAgain={handlePlayAgain}
       onUndo={transport ? undefined : handleUndo}
-      extraControls={extraControls}
+      extraControls={renderExtraControls ? renderExtraControls(state) : extraControls}
       topBanner={topBanner}
     />
   );
