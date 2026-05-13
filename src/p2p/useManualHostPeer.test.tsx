@@ -155,7 +155,7 @@ describe("useManualHostPeer", () => {
   it("send before data channel open does not throw", () => {
     const { result } = renderHook(() => useManualHostPeer());
     expect(() =>
-      result.current.send({ type: "reset", seq: 1 })
+      result.current.send({ type: "reset-request", seq: 1 })
     ).not.toThrow();
   });
 

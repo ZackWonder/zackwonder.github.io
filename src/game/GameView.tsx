@@ -5,12 +5,37 @@ import constants from "../constants";
 import type { GameState } from "./types";
 import type { Winner } from "./types";
 
+export type PlayAgainState = "idle" | "waiting-peer" | "peer-waiting";
+
 interface CrownProps {
   value: Winner | undefined;
   handlePlayAgain: () => void;
+  playAgainState: PlayAgainState;
 }
 
-function Crown({ value, handlePlayAgain }: CrownProps) {
+function PlayAgainButton({
+  handlePlayAgain,
+  playAgainState,
+}: {
+  handlePlayAgain: () => void;
+  playAgainState: PlayAgainState;
+}) {
+  if (playAgainState === "waiting-peer") {
+    return (
+      <button id="playAgainBtn" disabled>
+        等待对方确认...
+      </button>
+    );
+  }
+  const label = playAgainState === "peer-waiting" ? "再玩一次（对方已确认）" : "再玩一次";
+  return (
+    <button id="playAgainBtn" onClick={handlePlayAgain}>
+      {label}
+    </button>
+  );
+}
+
+function Crown({ value, handlePlayAgain, playAgainState }: CrownProps) {
   useEffect(() => {
     if (value) {
       const btn = document.querySelector(".crownSpan");
@@ -30,9 +55,7 @@ function Crown({ value, handlePlayAgain }: CrownProps) {
         <br />
         贏了！
         <br />
-        <button id="playAgainBtn" onClick={handlePlayAgain}>
-          再玩一次
-        </button>
+        <PlayAgainButton handlePlayAgain={handlePlayAgain} playAgainState={playAgainState} />
         <hr />
       </div>
     );
@@ -45,9 +68,7 @@ function Crown({ value, handlePlayAgain }: CrownProps) {
         <button className="playerB crown"></button>
       </span>
       <br />
-      <button id="playAgainBtn" onClick={handlePlayAgain}>
-        再玩一次
-      </button>
+      <PlayAgainButton handlePlayAgain={handlePlayAgain} playAgainState={playAgainState} />
       <hr />
     </div>
   );
@@ -68,6 +89,7 @@ export interface GameViewProps {
   topBanner?: React.ReactNode;
   extraControls?: React.ReactNode;
   notice?: GameViewNotice | null;
+  playAgainState?: PlayAgainState;
 }
 
 export default function GameView({
@@ -80,6 +102,7 @@ export default function GameView({
   topBanner,
   extraControls,
   notice,
+  playAgainState = "idle",
 }: GameViewProps) {
   const lastStep = state.history.length > 0 ? state.history[state.history.length - 1] : undefined;
   return (
@@ -92,7 +115,11 @@ export default function GameView({
     >
       <header className="App-header">
         {topBanner}
-        <Crown value={state.winner} handlePlayAgain={onPlayAgain} />
+        <Crown
+          value={state.winner}
+          handlePlayAgain={onPlayAgain}
+          playAgainState={playAgainState}
+        />
         <Board
           w={constants.WIDTH}
           h={constants.HEIGHT}

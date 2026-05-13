@@ -70,8 +70,28 @@ export default function GameContainer({
   const [aLevel, setALevel] = useState(0);
   const [bLevel, setBLevel] = useState(0);
   const [notice, setNotice] = useState<GameViewNotice | null>(null);
+  const [localWantsReset, setLocalWantsReset] = useState(false);
+  const [remoteWantsReset, setRemoteWantsReset] = useState(false);
   const seqRef = useRef(0);
   const noticeIdRef = useRef(0);
+
+  // P2P 再玩一次：两边都点击才真正重置；任一方对应字段被设置后，若另一方已是 true，本地立刻 applyReset
+  useEffect(() => {
+    if (!transport) return;
+    if (localWantsReset && remoteWantsReset) {
+      setState((s) => applyReset(s));
+      setLocalWantsReset(false);
+      setRemoteWantsReset(false);
+    }
+  }, [transport, localWantsReset, remoteWantsReset]);
+
+  // 新局开始（winner 重新变成 undefined）时也确保 reset 旗子归零
+  useEffect(() => {
+    if (state.winner === undefined) {
+      setLocalWantsReset(false);
+      setRemoteWantsReset(false);
+    }
+  }, [state.winner]);
 
   useEffect(() => {
     if (!notice) return;
@@ -105,8 +125,9 @@ export default function GameContainer({
     const unsub = transport.onMessage((msg) => {
       if (msg.type === "move") {
         setState((s) => applyMove(s, msg.col));
-      } else if (msg.type === "reset") {
-        setState((s) => applyReset(s));
+      } else if (msg.type === "reset-request") {
+        // 仅标记对方愿意再玩一次；上面的合意 effect 会在双方都 true 时触发 applyReset
+        setRemoteWantsReset(true);
       }
     });
     return unsub;
@@ -139,16 +160,27 @@ export default function GameContainer({
   );
 
   const handlePlayAgain = useCallback(() => {
-    setState((s) => applyReset(s));
-    if (transport) {
-      seqRef.current += 1;
-      transport.send({ type: "reset", seq: seqRef.current });
+    if (!transport) {
+      setState((s) => applyReset(s));
+      return;
     }
-  }, [transport]);
+    if (localWantsReset) return; // 防重复点击
+    setLocalWantsReset(true);
+    seqRef.current += 1;
+    transport.send({ type: "reset-request", seq: seqRef.current });
+  }, [transport, localWantsReset]);
 
   const handleUndo = useCallback(() => {
     setState((s) => applyUndo(s));
   }, []);
+
+  const playAgainState = !transport
+    ? "idle"
+    : localWantsReset && !remoteWantsReset
+    ? "waiting-peer"
+    : !localWantsReset && remoteWantsReset
+    ? "peer-waiting"
+    : "idle";
 
   return (
     <GameView
@@ -161,6 +193,7 @@ export default function GameContainer({
       extraControls={renderExtraControls ? renderExtraControls(state) : extraControls}
       topBanner={topBanner}
       notice={notice}
+      playAgainState={playAgainState}
     />
   );
 }

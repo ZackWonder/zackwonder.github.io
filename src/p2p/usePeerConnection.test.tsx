@@ -129,7 +129,7 @@ describe("useHostPeer", () => {
 
   it("send before connection ready does not throw", () => {
     const { result } = renderHook(() => useHostPeer());
-    expect(() => result.current.send({ type: "reset", seq: 1 })).not.toThrow();
+    expect(() => result.current.send({ type: "reset-request", seq: 1 })).not.toThrow();
   });
 
   it("cleans up the peer on unmount", () => {
