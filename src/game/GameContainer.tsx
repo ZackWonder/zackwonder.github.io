@@ -56,6 +56,7 @@ export default function GameContainer({ extraControls, topBanner }: GameContaine
   const [aLevel, setALevel] = useState(0);
   const [bLevel, setBLevel] = useState(0);
 
+  // 落子后处理胜利音效 + 头像升级（observe 模式：在 state.winner 变化时触发）
   useEffect(() => {
     if (state.winner === undefined) return;
     playWinSound(state.winner);
@@ -64,8 +65,9 @@ export default function GameContainer({ extraControls, topBanner }: GameContaine
     const slotB: AvatarSlot = { name: "sherly", level: bLevel, setLevel: setBLevel };
     if (state.winner === constants.PLAYER_A) void tryUpgradeOrReset(slotA, slotB);
     else void tryUpgradeOrReset(slotB, slotA);
-  }, [state.winner]);
+  }, [state.winner]); // 故意只 watch winner
 
+  // 清掉 droppingCell 的动画状态
   useEffect(() => {
     if (state.droppingCell === null) return;
     const t = setTimeout(() => {
