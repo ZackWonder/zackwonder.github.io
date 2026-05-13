@@ -25,24 +25,50 @@
 
 .invite-role-row {
   display: flex;
-  gap: 0.75rem;
+  gap: 1.25rem;
   justify-content: center;
   margin-bottom: 1rem;
 }
 
-.invite-role {
-  flex: 1;
-  padding: 0.7rem 1rem;
+.role-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: transparent;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
   cursor: pointer;
-  color: #fff;
+  color: #fafafa;
+  border-radius: 10px;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
-.invite-role-blue { background: #1976d2; }
-.invite-role-red { background: #d32f2f; }
-.invite-role:hover { filter: brightness(1.15); }
+.role-pick:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.role-pick-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 4px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.role-pick-blue .role-pick-avatar { border-color: #1976d2; }
+.role-pick-red .role-pick-avatar { border-color: #d32f2f; }
+
+.role-pick-label {
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+.role-pick-blue .role-pick-label { color: #4ea3e8; }
+.role-pick-red .role-pick-label { color: #ef6b6b; }
 
 .invite-hint {
   margin: 0.25rem 0 0.5rem;

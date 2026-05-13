@@ -66,11 +66,29 @@ export default function InviteModal({
         <div className="invite-modal">
           <h3>选择阵营</h3>
           <div className="invite-role-row">
-            <button className="invite-role invite-role-blue" onClick={() => onChooseRole("A")}>
-              我玩蓝方（先手）
+            <button
+              type="button"
+              className="role-pick role-pick-blue"
+              onClick={() => onChooseRole("A")}
+              aria-label="我玩蓝方（先手）"
+            >
+              <span
+                className="role-pick-avatar"
+                style={{ backgroundImage: "url('/tanson_0.jpg')" }}
+              />
+              <span className="role-pick-label">蓝方（先手）</span>
             </button>
-            <button className="invite-role invite-role-red" onClick={() => onChooseRole("B")}>
-              我玩红方
+            <button
+              type="button"
+              className="role-pick role-pick-red"
+              onClick={() => onChooseRole("B")}
+              aria-label="我玩红方"
+            >
+              <span
+                className="role-pick-avatar"
+                style={{ backgroundImage: "url('/sherly_0.jpg')" }}
+              />
+              <span className="role-pick-label">红方</span>
             </button>
           </div>
           <button className="invite-cancel" onClick={onCancel}>
