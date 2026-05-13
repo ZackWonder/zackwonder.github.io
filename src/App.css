@@ -103,3 +103,15 @@
   right: 16px;
   z-index: 100;
 }
+
+.game-status-screen {
+  text-align: center;
+  margin-top: 40px;
+  color: #e6edf3;
+}
+
+.game-status-screen textarea {
+  color: #fafafa;
+  background: #2c2c2c;
+  border: 1px solid #444;
+}

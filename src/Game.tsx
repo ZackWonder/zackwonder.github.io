@@ -267,7 +267,7 @@ function JoinerFlow({ remotePeerId, role, onLeave }: JoinerFlowProps) {
 
   if (join.status === "failed" && !hasConnected) {
     return (
-      <div style={{ textAlign: "center", marginTop: 40 }}>
+      <div className="game-status-screen">
         <p style={{ color: "#e57373" }}>连接失败，请联系发起方重新分享链接</p>
         <button onClick={onLeave}>返回单机</button>
       </div>
@@ -276,7 +276,7 @@ function JoinerFlow({ remotePeerId, role, onLeave }: JoinerFlowProps) {
 
   if (!hasConnected) {
     return (
-      <div style={{ textAlign: "center", marginTop: 40 }}>
+      <div className="game-status-screen">
         <p>正在连接对方...</p>
         <button onClick={onLeave}>取消</button>
       </div>
@@ -326,7 +326,7 @@ function ManualJoinerFlow({ encodedOffer, role, onLeave }: ManualJoinerFlowProps
 
   if (join.status === "failed" && !hasConnected) {
     return (
-      <div style={{ textAlign: "center", marginTop: 40 }}>
+      <div className="game-status-screen">
         <p style={{ color: "#e57373" }}>邀请数据无效，或浏览器不支持手动模式</p>
         <p style={{ color: "#999", fontSize: "0.9em" }}>{join.error}</p>
         <button onClick={onLeave}>返回单机</button>
@@ -337,7 +337,7 @@ function ManualJoinerFlow({ encodedOffer, role, onLeave }: ManualJoinerFlowProps
   if (!hasConnected) {
     if (join.manualAnswer) {
       return (
-        <div style={{ textAlign: "center", marginTop: 40, padding: "0 16px" }}>
+        <div className="game-status-screen" style={{ padding: "0 16px" }}>
           <h3>把这段答复发回给对方</h3>
           <textarea
             readOnly
@@ -365,7 +365,7 @@ function ManualJoinerFlow({ encodedOffer, role, onLeave }: ManualJoinerFlowProps
       );
     }
     return (
-      <div style={{ textAlign: "center", marginTop: 40 }}>
+      <div className="game-status-screen">
         <p>
           {join.status === "parsing"
             ? "正在解析邀请..."
