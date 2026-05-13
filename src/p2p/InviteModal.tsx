@@ -101,11 +101,11 @@ export default function InviteModal({
 
   if (manualMode) {
     const statusText =
-      manualOfferStatus === "gathering"
-        ? "正在收集网络候选..."
+      manualOfferStatus === "ready"
+        ? "等待对方回复"
         : manualOfferStatus === "applying-answer"
         ? "正在应用答复..."
-        : "等待对方回复";
+        : "正在生成邀请链接（收集网络候选）...";
     return (
       <div className="invite-modal-backdrop">
         <div className="invite-modal">
