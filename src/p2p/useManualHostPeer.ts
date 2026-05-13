@@ -1,22 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { decodeSDP, encodeSDP } from "./manualSignaling";
 import { isPeerMessage, type PeerMessage } from "./protocol";
-
-const ICE_SERVERS: RTCIceServer[] = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
-  { urls: "stun:stun.cloudflare.com:3478" },
-  {
-    urls: "turn:openrelay.metered.ca:80",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-];
+import { ICE_SERVERS } from "./iceServers";
 
 export type ManualHostStatus =
   | "init"
