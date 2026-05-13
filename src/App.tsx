@@ -14,7 +14,7 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     (localStorage.getItem('theme') as 'dark' | 'light') || 'dark'
   )
-  const [showGame, setShowGame] = useState(() => window.location.hash === '#game')
+  const [showGame, setShowGame] = useState(() => window.location.hash.startsWith('#game'))
   const [transitioning, setTransitioning] = useState(false)
 
   const data = locale === 'en' ? en : zh
@@ -30,7 +30,7 @@ export default function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      setShowGame(window.location.hash === '#game')
+      setShowGame(window.location.hash.startsWith('#game'))
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
