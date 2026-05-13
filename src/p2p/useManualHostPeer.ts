@@ -103,6 +103,16 @@ export function useManualHostPeer(): UseManualHostPeerResult {
 
     return () => {
       clearTimeout(fallbackTimer);
+      // 先把 dc 的事件 handler 全部置 null，避免 pc.close() 触发的关闭事件
+      // 在 StrictMode dev 重新挂载场景下污染保留的 state（导致 status 一闪
+      // 变成 disconnected，模态框跟着消失）
+      if (dcRef.current) {
+        dcRef.current.onopen = null;
+        dcRef.current.onmessage = null;
+        dcRef.current.onclose = null;
+        dcRef.current.onerror = null;
+      }
+      pc.onicegatheringstatechange = null;
       pc.close();
       pcRef.current = null;
       dcRef.current = null;

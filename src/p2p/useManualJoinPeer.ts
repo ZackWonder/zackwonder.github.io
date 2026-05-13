@@ -104,6 +104,16 @@ export function useManualJoinPeer(encodedOffer: string): UseManualJoinPeerResult
 
     return () => {
       clearTimeout(fallbackTimer);
+      // 见 useManualHostPeer 同位置注释：cleanup 前先解绑事件 handler，
+      // 避免在 StrictMode dev 双重挂载下污染 state
+      if (dcRef.current) {
+        dcRef.current.onopen = null;
+        dcRef.current.onmessage = null;
+        dcRef.current.onclose = null;
+        dcRef.current.onerror = null;
+      }
+      pc.ondatachannel = null;
+      pc.onicegatheringstatechange = null;
       pc.close();
       pcRef.current = null;
       dcRef.current = null;
