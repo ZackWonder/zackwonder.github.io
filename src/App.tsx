@@ -43,6 +43,13 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
+  useEffect(() => {
+    document.title =
+      mode === 'resume'
+        ? 'Zack Wong — Full Stack Engineer'
+        : 'For my loves'
+  }, [mode])
+
   const toggleLocale = useCallback(() => {
     setLocale((prev) => (prev === 'en' ? 'zh' : 'en'))
   }, [])
