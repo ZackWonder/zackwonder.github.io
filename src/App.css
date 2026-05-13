@@ -96,3 +96,10 @@
   border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.15);
 }
+
+.p2p-fab {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+}

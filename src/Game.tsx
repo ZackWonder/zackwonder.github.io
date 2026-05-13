@@ -29,7 +29,7 @@ export default function GameApp() {
           s.history.length === 0 ? (
             <button
               id="p2pBtn"
-              style={{ marginLeft: 8 }}
+              className="p2p-fab"
               onClick={() => setMode({ kind: "host" })}
             >
               🔗 P2P 对战
@@ -143,30 +143,32 @@ function ConnectionBanner({ localRole, status, onLeave }: ConnectionBannerProps)
   const colorText = localRole === "A" ? "蓝方" : "红方";
   const disconnected = status === "disconnected" || status === "failed";
   return (
-    <div
-      style={{
-        fontSize: 14,
-        marginBottom: 6,
-        padding: disconnected ? "6px 10px" : 0,
-        background: disconnected ? "rgba(229,115,115,0.18)" : "transparent",
-        borderRadius: 6,
-        color: disconnected ? "#e57373" : "inherit",
-      }}
-    >
-      <span
+    <>
+      <div
         style={{
-          display: "inline-block",
-          width: 8,
-          height: 8,
-          background: disconnected ? "#e57373" : "#4caf50",
-          borderRadius: 4,
-          marginRight: 6,
+          fontSize: 14,
+          marginBottom: 6,
+          padding: disconnected ? "6px 10px" : 0,
+          background: disconnected ? "rgba(229,115,115,0.18)" : "transparent",
+          borderRadius: 6,
+          color: disconnected ? "#e57373" : "inherit",
         }}
-      />
-      {disconnected ? "对方已断开" : `P2P 对战中 | 你是 ${colorText}`}
-      <button style={{ marginLeft: 12 }} onClick={onLeave}>
+      >
+        <span
+          style={{
+            display: "inline-block",
+            width: 8,
+            height: 8,
+            background: disconnected ? "#e57373" : "#4caf50",
+            borderRadius: 4,
+            marginRight: 6,
+          }}
+        />
+        {disconnected ? "对方已断开" : `P2P 对战中 | 你是 ${colorText}`}
+      </div>
+      <button className="p2p-fab" onClick={onLeave}>
         返回单机
       </button>
-    </div>
+    </>
   );
 }
