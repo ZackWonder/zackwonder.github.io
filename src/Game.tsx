@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import GameContainer from "./game/GameContainer";
 import type { GameContainerTransport } from "./game/GameContainer";
 import InviteModal from "./p2p/InviteModal";
@@ -49,15 +49,15 @@ function HostFlow({ onLeave }: { onLeave: () => void }) {
   const host = useHostPeer();
   const [hostRole, setHostRole] = useState<PlayerRole | null>(null);
   const transport = useTransport(host, hostRole);
-
-  const showModal = host.status !== "connected";
+  const hasConnectedOnce = host.status === "connected" || host.status === "disconnected";
+  const showModal = !hasConnectedOnce;
 
   return (
     <>
       <GameContainer
         transport={transport}
         topBanner={
-          host.status === "connected" && hostRole ? (
+          hostRole && hasConnectedOnce ? (
             <ConnectionBanner localRole={hostRole} status={host.status} onLeave={onLeave} />
           ) : null
         }
@@ -84,8 +84,13 @@ interface JoinerFlowProps {
 function JoinerFlow({ remotePeerId, role, onLeave }: JoinerFlowProps) {
   const join = useJoinPeer(remotePeerId);
   const transport = useTransport(join, role);
+  const [hasConnected, setHasConnected] = useState(false);
 
-  if (join.status === "failed") {
+  useEffect(() => {
+    if (join.status === "connected") setHasConnected(true);
+  }, [join.status]);
+
+  if (join.status === "failed" && !hasConnected) {
     return (
       <div style={{ textAlign: "center", marginTop: 40 }}>
         <p style={{ color: "#e57373" }}>连接失败，请联系发起方重新分享链接</p>
@@ -94,7 +99,7 @@ function JoinerFlow({ remotePeerId, role, onLeave }: JoinerFlowProps) {
     );
   }
 
-  if (join.status !== "connected") {
+  if (!hasConnected) {
     return (
       <div style={{ textAlign: "center", marginTop: 40 }}>
         <p>正在连接对方...</p>
@@ -134,12 +139,32 @@ interface ConnectionBannerProps {
 
 function ConnectionBanner({ localRole, status, onLeave }: ConnectionBannerProps) {
   const colorText = localRole === "A" ? "蓝方" : "红方";
-  const dotColor = status === "connected" ? "#4caf50" : "#e57373";
+  const disconnected = status === "disconnected" || status === "failed";
   return (
-    <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 6 }}>
-      <span style={{ display: "inline-block", width: 8, height: 8, background: dotColor, borderRadius: 4, marginRight: 6 }} />
-      P2P 对战中 | 你是 {colorText}
-      <button style={{ marginLeft: 12 }} onClick={onLeave}>返回单机</button>
+    <div
+      style={{
+        fontSize: 14,
+        marginBottom: 6,
+        padding: disconnected ? "6px 10px" : 0,
+        background: disconnected ? "rgba(229,115,115,0.18)" : "transparent",
+        borderRadius: 6,
+        color: disconnected ? "#e57373" : "inherit",
+      }}
+    >
+      <span
+        style={{
+          display: "inline-block",
+          width: 8,
+          height: 8,
+          background: disconnected ? "#e57373" : "#4caf50",
+          borderRadius: 4,
+          marginRight: 6,
+        }}
+      />
+      {disconnected ? "对方已断开" : `P2P 对战中 | 你是 ${colorText}`}
+      <button style={{ marginLeft: 12 }} onClick={onLeave}>
+        返回单机
+      </button>
     </div>
   );
 }
