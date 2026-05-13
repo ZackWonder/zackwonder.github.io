@@ -6,7 +6,7 @@ interface SectionProps {
 }
 
 export default function Section({ title, children }: SectionProps) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const el = ref.current
@@ -25,9 +25,9 @@ export default function Section({ title, children }: SectionProps) {
   }, [])
 
   return (
-    <div ref={ref} className="section fade-section">
-      <p className="section-title">// {title}</p>
+    <section ref={ref} className="section fade-section" aria-label={title}>
+      <h2 className="section-title">// {title}</h2>
       {children}
-    </div>
+    </section>
   )
 }

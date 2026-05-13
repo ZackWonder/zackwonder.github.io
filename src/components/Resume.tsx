@@ -12,7 +12,7 @@ interface ResumeProps {
 
 export default function Resume({ data }: ResumeProps) {
   return (
-    <div className="resume">
+    <main className="resume">
       <Header data={data} />
       <Section title={data.labels.summary}>
         <p className="summary-text">{data.summary}</p>
@@ -27,6 +27,6 @@ export default function Resume({ data }: ResumeProps) {
         <Education education={data.education} />
       </Section>
       <Footer />
-    </div>
+    </main>
   )
 }

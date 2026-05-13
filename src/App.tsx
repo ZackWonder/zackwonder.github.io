@@ -35,6 +35,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('locale', locale)
+    document.documentElement.lang = locale === 'zh' ? 'zh-CN' : 'en'
   }, [locale])
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function App() {
   useEffect(() => {
     document.title =
       mode === 'resume'
-        ? 'Zack Wong — Full Stack Engineer'
+        ? 'Zack Wong — Full Stack Engineer | Golang · React · Blockchain'
         : 'For my loves'
   }, [mode])
 
