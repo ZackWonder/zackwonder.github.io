@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import constants from "../constants";
 import { applyMove, applyReset, applyUndo, createInitialState } from "./gameLogic";
 import type { GameState, Winner } from "./types";
 import GameView from "./GameView";
+import type { PeerMessage, PlayerRole } from "../p2p/protocol";
 
 function playWinSound(winner: Winner) {
   const soundMap: Record<number, string> = {
@@ -46,15 +47,23 @@ async function tryUpgradeOrReset(winner: AvatarSlot, loser: AvatarSlot): Promise
   }
 }
 
+export interface GameContainerTransport {
+  send: (msg: PeerMessage) => void;
+  onMessage: (handler: (msg: PeerMessage) => void) => () => void;
+  localRole: PlayerRole;
+}
+
 export interface GameContainerProps {
   extraControls?: React.ReactNode;
   topBanner?: React.ReactNode;
+  transport?: GameContainerTransport;
 }
 
-export default function GameContainer({ extraControls, topBanner }: GameContainerProps) {
+export default function GameContainer({ extraControls, topBanner, transport }: GameContainerProps) {
   const [state, setState] = useState<GameState>(() => createInitialState(true));
   const [aLevel, setALevel] = useState(0);
   const [bLevel, setBLevel] = useState(0);
+  const seqRef = useRef(0);
 
   // 落子后处理胜利音效 + 头像升级（observe 模式：在 state.winner 变化时触发）
   useEffect(() => {
@@ -76,13 +85,47 @@ export default function GameContainer({ extraControls, topBanner }: GameContaine
     return () => clearTimeout(t);
   }, [state.droppingCell]);
 
-  const handleColumnClick = useCallback((col: number) => {
-    setState((s) => applyMove(s, col));
-  }, []);
+  // P2P: 订阅对方消息
+  useEffect(() => {
+    if (!transport) return;
+    const unsub = transport.onMessage((msg) => {
+      if (msg.type === "move") {
+        setState((s) => applyMove(s, msg.col));
+      } else if (msg.type === "reset") {
+        setState((s) => applyReset(s));
+      }
+    });
+    return unsub;
+  }, [transport]);
+
+  const isLocalTurn = useCallback(() => {
+    if (!transport) return true;
+    const localIsA = transport.localRole === "A";
+    return state.aTurn === localIsA;
+  }, [state.aTurn, transport]);
+
+  const handleColumnClick = useCallback(
+    (col: number) => {
+      if (transport && !isLocalTurn()) return;
+      setState((s) => {
+        const next = applyMove(s, col);
+        if (next !== s && transport) {
+          seqRef.current += 1;
+          transport.send({ type: "move", col, seq: seqRef.current });
+        }
+        return next;
+      });
+    },
+    [transport, isLocalTurn]
+  );
 
   const handlePlayAgain = useCallback(() => {
     setState((s) => applyReset(s));
-  }, []);
+    if (transport) {
+      seqRef.current += 1;
+      transport.send({ type: "reset", seq: seqRef.current });
+    }
+  }, [transport]);
 
   const handleUndo = useCallback(() => {
     setState((s) => applyUndo(s));
@@ -95,7 +138,7 @@ export default function GameContainer({ extraControls, topBanner }: GameContaine
       bLevel={bLevel}
       onColumnClick={handleColumnClick}
       onPlayAgain={handlePlayAgain}
-      onUndo={handleUndo}
+      onUndo={transport ? undefined : handleUndo}
       extraControls={extraControls}
       topBanner={topBanner}
     />
