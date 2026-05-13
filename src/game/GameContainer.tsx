@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import constants from "../constants";
 import { applyMove, applyReset, applyUndo, createInitialState } from "./gameLogic";
 import type { GameState, Winner } from "./types";
-import GameView from "./GameView";
+import GameView, { type GameViewNotice } from "./GameView";
 import type { PeerMessage, PlayerRole } from "../p2p/protocol";
 
 function playWinSound(winner: Winner) {
@@ -69,7 +69,15 @@ export default function GameContainer({
   const [state, setState] = useState<GameState>(() => createInitialState(true));
   const [aLevel, setALevel] = useState(0);
   const [bLevel, setBLevel] = useState(0);
+  const [notice, setNotice] = useState<GameViewNotice | null>(null);
   const seqRef = useRef(0);
+  const noticeIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 1500);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   // 落子后处理胜利音效 + 头像升级（observe 模式：在 state.winner 变化时触发）
   useEffect(() => {
@@ -112,7 +120,11 @@ export default function GameContainer({
 
   const handleColumnClick = useCallback(
     (col: number) => {
-      if (transport && !isLocalTurn()) return;
+      if (transport && !isLocalTurn()) {
+        noticeIdRef.current += 1;
+        setNotice({ id: noticeIdRef.current, text: "轮到对方下子" });
+        return;
+      }
       // 先用当前 state 检验 move 是否会改变盘面；StrictMode 下 setState 的 updater
       // 会被调用两次，所以 send 必须放在 updater 外面，否则消息会被发送两次。
       const next = applyMove(state, col);
@@ -148,6 +160,7 @@ export default function GameContainer({
       onUndo={transport ? undefined : handleUndo}
       extraControls={renderExtraControls ? renderExtraControls(state) : extraControls}
       topBanner={topBanner}
+      notice={notice}
     />
   );
 }

@@ -115,3 +115,20 @@
   background: #2c2c2c;
   border: 1px solid #444;
 }
+
+.game-notice {
+  margin-top: 12px;
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fafafa;
+  border-radius: 6px;
+  font-size: 14px;
+  display: inline-block;
+  animation: game-notice-fade 1.5s ease forwards;
+}
+
+@keyframes game-notice-fade {
+  0% { opacity: 0; transform: translateY(-4px); }
+  15%, 70% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}

@@ -53,6 +53,11 @@ function Crown({ value, handlePlayAgain }: CrownProps) {
   );
 }
 
+export interface GameViewNotice {
+  id: number;
+  text: string;
+}
+
 export interface GameViewProps {
   state: GameState;
   aLevel: number;
@@ -62,6 +67,7 @@ export interface GameViewProps {
   onUndo?: () => void;
   topBanner?: React.ReactNode;
   extraControls?: React.ReactNode;
+  notice?: GameViewNotice | null;
 }
 
 export default function GameView({
@@ -73,6 +79,7 @@ export default function GameView({
   onUndo,
   topBanner,
   extraControls,
+  notice,
 }: GameViewProps) {
   const lastStep = state.history.length > 0 ? state.history[state.history.length - 1] : undefined;
   return (
@@ -96,6 +103,11 @@ export default function GameView({
           winPoints={state.winPoints}
           onClick={(i) => onColumnClick(i)}
         />
+        {notice && (
+          <div key={notice.id} className="game-notice">
+            {notice.text}
+          </div>
+        )}
         <hr />
         {!state.winner && onUndo && <button onClick={onUndo}>悔棋</button>}
         {extraControls}
