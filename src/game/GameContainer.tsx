@@ -113,16 +113,17 @@ export default function GameContainer({
   const handleColumnClick = useCallback(
     (col: number) => {
       if (transport && !isLocalTurn()) return;
-      setState((s) => {
-        const next = applyMove(s, col);
-        if (next !== s && transport) {
-          seqRef.current += 1;
-          transport.send({ type: "move", col, seq: seqRef.current });
-        }
-        return next;
-      });
+      // 先用当前 state 检验 move 是否会改变盘面；StrictMode 下 setState 的 updater
+      // 会被调用两次，所以 send 必须放在 updater 外面，否则消息会被发送两次。
+      const next = applyMove(state, col);
+      if (next === state) return;
+      setState(next);
+      if (transport) {
+        seqRef.current += 1;
+        transport.send({ type: "move", col, seq: seqRef.current });
+      }
     },
-    [transport, isLocalTurn]
+    [state, transport, isLocalTurn]
   );
 
   const handlePlayAgain = useCallback(() => {
