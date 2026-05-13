@@ -97,9 +97,10 @@ export function useManualJoinPeer(encodedOffer: string): UseManualJoinPeerResult
       }
     })();
 
+    // 同 useManualHostPeer：5s 兜底，跳过尚未到达的慢速 TURN 候选
     const fallbackTimer = setTimeout(() => {
       if (pc.localDescription) void exposeAnswer();
-    }, 30_000);
+    }, 5_000);
 
     return () => {
       clearTimeout(fallbackTimer);

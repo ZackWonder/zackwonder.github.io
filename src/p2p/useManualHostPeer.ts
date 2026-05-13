@@ -94,9 +94,12 @@ export function useManualHostPeer(): UseManualHostPeerResult {
       }
     })();
 
+    // ICE gathering 兜底：等齐所有候选有时要 10–30s（TURN 不可达时尤其慢），
+    // 这里 5s 就用现有候选（通常已有 host + STUN srflx，覆盖大多数场景），
+    // 缺失的 TURN 候选只在严苛 NAT 才需要——拿不到也接受。
     const fallbackTimer = setTimeout(() => {
       if (pc.localDescription) void exposeOffer();
-    }, 30_000);
+    }, 5_000);
 
     return () => {
       clearTimeout(fallbackTimer);
