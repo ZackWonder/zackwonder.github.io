@@ -155,9 +155,12 @@ export type PeerMessage =
 ### 5.2 URL 邀请链接格式
 
 ```
-https://zackwonder.github.io/#peer=<peerId>&role=<red|blue>
+https://zackwonder.github.io/#game?peer=<peerId>&role=<red|blue>
 ```
 
+**重要**：现有 `App.tsx` 已经用 `window.location.hash === '#game'` 触发游戏页。邀请链接必须复用此入口，否则加入方进不到游戏页。因此格式为 `#game?peer=...&role=...`：
+
+- `App.tsx` 的判断改为 `window.location.hash.startsWith('#game')`
 - `peerId`：发起方的 PeerJS ID（由 broker 随机分配）
 - `role`：**加入方**应扮演的阵营（与发起方相反）
 - 例：发起方选蓝方（PLAYER_A），生成的链接里 `role=red`，加入方进入后扮演 PLAYER_B
@@ -167,7 +170,11 @@ https://zackwonder.github.io/#peer=<peerId>&role=<red|blue>
 ```ts
 // src/p2p/protocol.ts
 export function parseInviteHash(hash: string): { peerId: string; role: 'A' | 'B' } | null
+// hash 例：'#game?peer=abc&role=red' → { peerId: 'abc', role: 'B' }
+// 缺字段、role 值非法、不是 #game 前缀 → 返回 null
+
 export function buildInviteUrl(origin: string, peerId: string, joinerRole: 'A' | 'B'): string
+// origin 例：'https://zackwonder.github.io' → 'https://zackwonder.github.io/#game?peer=...&role=...'
 ```
 
 `role=red` ↔ `PLAYER_B`，`role=blue` ↔ `PLAYER_A`。
@@ -253,7 +260,9 @@ setStatus('connected')
 
 ### 7.3 加入方流程
 
-`Game.tsx` 启动时：
+**`App.tsx` 改动**：将 `window.location.hash === '#game'` 改为 `window.location.hash.startsWith('#game')`，使带邀请参数的链接也能命中游戏页。
+
+**`Game.tsx` 启动时**：
 
 ```
 const params = parseInviteHash(window.location.hash)
@@ -264,7 +273,7 @@ if (params) {
 }
 ```
 
-无 hash → 单机模式。
+无 invite 参数 → 单机模式。返回单机时同步清理 URL（`history.replaceState(null,'','#game')`），避免刷新又重新加入。
 
 ### 7.4 对战中状态条（`PeerStatusBadge`，可内联到 `GameView`）
 
