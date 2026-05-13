@@ -190,7 +190,8 @@ function ManualHostFlow({ hostRole, onBackToBroker, onLeave }: ManualHostFlowPro
   const joinerRole: PlayerRole = hostRole === "A" ? "B" : "A";
   const manualOfferUrl = useMemo(() => {
     if (!host.manualOffer) return null;
-    return buildManualInviteUrl(window.location.origin, host.manualOffer, joinerRole);
+    const route = window.location.hash.startsWith("#play") ? "#play" : "#game";
+    return buildManualInviteUrl(window.location.origin, route, host.manualOffer, joinerRole);
   }, [host.manualOffer, joinerRole]);
 
   const transport: GameContainerTransport | undefined = useMemo(() => {

@@ -1,4 +1,4 @@
-import type { PlayerRole } from "./protocol";
+import type { InviteHashRoute, PlayerRole } from "./protocol";
 
 export async function compressBase64(text: string): Promise<string> {
   const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
@@ -55,16 +55,17 @@ const COLOR_TO_ROLE: Record<string, PlayerRole> = { blue: "A", red: "B" };
 
 export function buildManualInviteUrl(
   origin: string,
+  route: InviteHashRoute,
   encodedOffer: string,
   joinerRole: PlayerRole
 ): string {
-  return `${origin}/#game?manual-offer=${encodedOffer}&role=${ROLE_TO_COLOR[joinerRole]}`;
+  return `${origin}/${route}?manual-offer=${encodedOffer}&role=${ROLE_TO_COLOR[joinerRole]}`;
 }
 
 export function parseManualInviteHash(
   hash: string
 ): { encodedOffer: string; role: PlayerRole } | null {
-  if (!hash.startsWith("#game")) return null;
+  if (!hash.startsWith("#game") && !hash.startsWith("#play")) return null;
   const qIdx = hash.indexOf("?");
   if (qIdx === -1) return null;
   const params = new URLSearchParams(hash.slice(qIdx + 1));

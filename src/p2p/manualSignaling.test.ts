@@ -78,14 +78,19 @@ describe("encodeSDP / decodeSDP", () => {
 });
 
 describe("buildManualInviteUrl", () => {
-  it("encodes role=B as red", () => {
-    const u = buildManualInviteUrl("https://example.com", "abc", "B");
+  it("encodes role=B as red on #game route", () => {
+    const u = buildManualInviteUrl("https://example.com", "#game", "abc", "B");
     expect(u).toBe("https://example.com/#game?manual-offer=abc&role=red");
   });
 
-  it("encodes role=A as blue", () => {
-    const u = buildManualInviteUrl("https://example.com", "xyz", "A");
+  it("encodes role=A as blue on #game route", () => {
+    const u = buildManualInviteUrl("https://example.com", "#game", "xyz", "A");
     expect(u).toBe("https://example.com/#game?manual-offer=xyz&role=blue");
+  });
+
+  it("preserves #play route when host is on the standalone page", () => {
+    const u = buildManualInviteUrl("https://example.com", "#play", "abc", "B");
+    expect(u).toBe("https://example.com/#play?manual-offer=abc&role=red");
   });
 });
 
@@ -104,6 +109,13 @@ describe("parseManualInviteHash", () => {
     });
   });
 
+  it("accepts the #play standalone route too", () => {
+    expect(parseManualInviteHash("#play?manual-offer=abc&role=red")).toEqual({
+      encodedOffer: "abc",
+      role: "B",
+    });
+  });
+
   it("returns null when manual-offer missing", () => {
     expect(parseManualInviteHash("#game?role=red")).toBeNull();
   });
@@ -116,7 +128,7 @@ describe("parseManualInviteHash", () => {
     expect(parseManualInviteHash("#game?manual-offer=abc&role=green")).toBeNull();
   });
 
-  it("returns null when hash is not #game prefixed", () => {
+  it("returns null when hash is not #game or #play prefixed", () => {
     expect(parseManualInviteHash("#manual-offer=abc&role=red")).toBeNull();
   });
 
@@ -130,11 +142,13 @@ describe("parseManualInviteHash", () => {
 });
 
 describe("round trip URL", () => {
-  it("buildManualInviteUrl + parseManualInviteHash preserves both fields", () => {
+  it("buildManualInviteUrl + parseManualInviteHash preserves fields on both routes", () => {
     for (const role of ["A", "B"] as const) {
-      const url = buildManualInviteUrl("https://x.test", "encoded-offer-data", role);
-      const hash = "#" + url.split("#")[1]!;
-      expect(parseManualInviteHash(hash)).toEqual({ encodedOffer: "encoded-offer-data", role });
+      for (const route of ["#game", "#play"] as const) {
+        const url = buildManualInviteUrl("https://x.test", route, "encoded-offer-data", role);
+        const hash = "#" + url.split("#")[1]!;
+        expect(parseManualInviteHash(hash)).toEqual({ encodedOffer: "encoded-offer-data", role });
+      }
     }
   });
 });

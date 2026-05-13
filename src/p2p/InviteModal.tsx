@@ -46,7 +46,8 @@ export default function InviteModal({
   const brokerInviteUrl = useMemo(() => {
     if (!hostPeerId || !hostRole) return "";
     const joinerRole: PlayerRole = hostRole === "A" ? "B" : "A";
-    return buildInviteUrl(window.location.origin, hostPeerId, joinerRole);
+    const route = window.location.hash.startsWith("#play") ? "#play" : "#game";
+    return buildInviteUrl(window.location.origin, route, hostPeerId, joinerRole);
   }, [hostPeerId, hostRole]);
 
   const copyTo = async (text: string, setCopied: (b: boolean) => void) => {

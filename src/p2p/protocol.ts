@@ -1,4 +1,5 @@
 export type PlayerRole = "A" | "B";
+export type InviteHashRoute = "#game" | "#play";
 
 export type PeerMessage =
   | { type: "move"; col: number; seq: number }
@@ -7,12 +8,21 @@ export type PeerMessage =
 const COLOR_TO_ROLE: Record<string, PlayerRole> = { blue: "A", red: "B" };
 const ROLE_TO_COLOR: Record<PlayerRole, "blue" | "red"> = { A: "blue", B: "red" };
 
-export function buildInviteUrl(origin: string, peerId: string, joinerRole: PlayerRole): string {
-  return `${origin}/#game?peer=${encodeURIComponent(peerId)}&role=${ROLE_TO_COLOR[joinerRole]}`;
+function isInviteRoute(hash: string): hash is `${InviteHashRoute}${string}` {
+  return hash.startsWith("#game") || hash.startsWith("#play");
+}
+
+export function buildInviteUrl(
+  origin: string,
+  route: InviteHashRoute,
+  peerId: string,
+  joinerRole: PlayerRole
+): string {
+  return `${origin}/${route}?peer=${encodeURIComponent(peerId)}&role=${ROLE_TO_COLOR[joinerRole]}`;
 }
 
 export function parseInviteHash(hash: string): { peerId: string; role: PlayerRole } | null {
-  if (!hash.startsWith("#game")) return null;
+  if (!isInviteRoute(hash)) return null;
   const qIdx = hash.indexOf("?");
   if (qIdx === -1) return null;
   const params = new URLSearchParams(hash.slice(qIdx + 1));
