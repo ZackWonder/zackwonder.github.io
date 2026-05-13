@@ -64,7 +64,7 @@ export default function InviteModal({
     return (
       <div className="invite-modal-backdrop">
         <div className="invite-modal">
-          <h3>选择阵营</h3>
+          <h3>选择角色</h3>
           <div className="invite-role-row">
             <button
               type="button"
