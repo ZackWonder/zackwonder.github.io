@@ -104,5 +104,9 @@ export default function Board({
       </div>
     );
   }
-  return <div>{rows}</div>;
+  return (
+    <div className="board-stage">
+      <div className="board-frame">{rows}</div>
+    </div>
+  );
 }
