@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import "./Board.css";
 import constants, { type Player } from "./constants";
 import useSound from "./useSound";
@@ -28,20 +29,34 @@ function Square({ value, winned, isLastStep, isDropping, dropRows, aTurn, onClic
   const [playOn] = useSound("./pop-up-on.mp3", { volume: 0.25 });
   const [playOff] = useSound("./pop-up-off.mp3", { volume: 0.25 });
 
+  // WeChat's WebView (X5) often intercepts touch as scroll before click fires.
+  // Trigger the move directly on pointerdown for touch and suppress the
+  // synthesized click. Mouse/keyboard still use the regular click handler.
+  const touchFiredRef = useRef(false);
+
   return (
     <span>
       {isLastStep && !winned && <span className="lastStep"></span>}
       <button
         className={cn}
         style={isDropping ? { '--drop-rows': dropRows } as React.CSSProperties : undefined}
-        onClick={onClick}
-        onMouseDown={() => playActive()}
-        onMouseUp={() => {
-          if (aTurn) {
-            playOn();
-          } else {
-            playOff();
+        onPointerDown={(e) => {
+          playActive();
+          if (e.pointerType === "touch") {
+            touchFiredRef.current = true;
+            onClick();
           }
+        }}
+        onPointerUp={() => {
+          if (aTurn) playOn();
+          else playOff();
+        }}
+        onClick={() => {
+          if (touchFiredRef.current) {
+            touchFiredRef.current = false;
+            return;
+          }
+          onClick();
         }}
       ></button>
     </span>
