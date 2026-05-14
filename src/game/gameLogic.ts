@@ -42,6 +42,8 @@ export function linePoints(
     if (square[i]![j] === v) points.push([i, j]);
     else break;
   }
+  // 按位置排序，让连线高光动画沿着自然方向（左→右、下→上）逐颗揭示
+  points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   return points;
 }
 

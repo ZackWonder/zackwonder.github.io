@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Board from "../Board";
 import PlayAffect from "../effect";
 import constants from "../constants";
-import type { GameState } from "./types";
-import type { Winner } from "./types";
+import type { GameState, Point, Winner } from "./types";
 
 export type PlayAgainState = "idle" | "waiting-peer" | "peer-waiting";
 
@@ -111,6 +110,8 @@ export interface GameViewProps {
   state: GameState;
   aLevel: number;
   bLevel: number;
+  revealedWinPoints?: Point[];
+  winnerPanelVisible: boolean;
   onColumnClick: (col: number) => void;
   onPlayAgain: () => void;
   onUndo?: () => void;
@@ -124,6 +125,8 @@ export default function GameView({
   state,
   aLevel,
   bLevel,
+  revealedWinPoints,
+  winnerPanelVisible,
   onColumnClick,
   onPlayAgain,
   onUndo,
@@ -143,13 +146,15 @@ export default function GameView({
     >
       <header className="App-header">
         {topBanner}
-        <Crown
-          value={state.winner}
-          aLevel={aLevel}
-          bLevel={bLevel}
-          handlePlayAgain={onPlayAgain}
-          playAgainState={playAgainState}
-        />
+        {winnerPanelVisible && (
+          <Crown
+            value={state.winner}
+            aLevel={aLevel}
+            bLevel={bLevel}
+            handlePlayAgain={onPlayAgain}
+            playAgainState={playAgainState}
+          />
+        )}
         <Board
           w={constants.WIDTH}
           h={constants.HEIGHT}
@@ -157,7 +162,7 @@ export default function GameView({
           lastStep={lastStep}
           droppingCell={state.droppingCell}
           aTurn={state.aTurn}
-          winPoints={state.winPoints}
+          winPoints={revealedWinPoints}
           onClick={(i) => onColumnClick(i)}
         />
         <div className="game-notice-slot">
