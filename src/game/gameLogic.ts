@@ -47,18 +47,23 @@ export function linePoints(
   return points;
 }
 
-export function isLine4(square: Board, x1: number, y1: number): Point[] | undefined {
+export function findWinLines(
+  square: Board,
+  x1: number,
+  y1: number
+): Point[][] | undefined {
   const directions: [number, number][] = [
     [1, 0],
     [0, 1],
     [1, 1],
     [1, -1],
   ];
+  const lines: Point[][] = [];
   for (const [dx, dy] of directions) {
     const points = linePoints(square, x1, y1, dx, dy);
-    if (points.length >= 4) return points;
+    if (points.length >= 4) lines.push(points);
   }
-  return undefined;
+  return lines.length > 0 ? lines : undefined;
 }
 
 export function createInitialState(aIsStarter: boolean): GameState {
@@ -68,7 +73,7 @@ export function createInitialState(aIsStarter: boolean): GameState {
     aTurn: aIsStarter,
     aIsStarter,
     winner: undefined,
-    winPoints: undefined,
+    winLines: undefined,
     droppingCell: null,
   };
 }
@@ -83,10 +88,10 @@ export function applyMove(state: GameState, columnIndex: number): GameState {
   if (droppedJ === undefined) return state;
 
   const newHistory: Point[] = [...state.history, [columnIndex, droppedJ]];
-  const newWinPoints = isLine4(newSquares, columnIndex, droppedJ);
+  const newWinLines = findWinLines(newSquares, columnIndex, droppedJ);
 
   let newWinner: Winner | undefined = undefined;
-  if (newWinPoints) newWinner = player;
+  if (newWinLines) newWinner = player;
   else if (newSquares.every((col) => col[constants.HEIGHT - 1] !== undefined))
     newWinner = 3;
 
@@ -96,7 +101,7 @@ export function applyMove(state: GameState, columnIndex: number): GameState {
     history: newHistory,
     aTurn: !state.aTurn,
     winner: newWinner,
-    winPoints: newWinPoints,
+    winLines: newWinLines,
     droppingCell: [columnIndex, droppedJ],
   };
 }

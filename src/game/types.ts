@@ -14,6 +14,6 @@ export interface GameState {
   aTurn: boolean;
   aIsStarter: boolean;
   winner: Winner | undefined;
-  winPoints: Point[] | undefined;
+  winLines: Point[][] | undefined;
   droppingCell: Point | null;
 }

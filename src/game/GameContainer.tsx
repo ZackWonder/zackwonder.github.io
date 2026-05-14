@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import constants from "../constants";
 import { applyMove, applyReset, applyUndo, createInitialState } from "./gameLogic";
-import type { GameState, Winner } from "./types";
+import type { GameState, Point, Winner } from "./types";
 import GameView, { type GameViewNotice } from "./GameView";
 import type { PeerMessage, PlayerRole } from "../p2p/protocol";
 
@@ -72,7 +72,7 @@ export default function GameContainer({
   const [notice, setNotice] = useState<GameViewNotice | null>(null);
   const [localWantsReset, setLocalWantsReset] = useState(false);
   const [remoteWantsReset, setRemoteWantsReset] = useState(false);
-  const [winRevealCount, setWinRevealCount] = useState(0);
+  const [revealedWinPoints, setRevealedWinPoints] = useState<Point[]>([]);
   const [winnerPanelVisible, setWinnerPanelVisible] = useState(false);
   const seqRef = useRef(0);
   const noticeIdRef = useRef(0);
@@ -115,39 +115,65 @@ export default function GameContainer({
     }
   }, [aLevel, bLevel]);
 
-  // 连线后逐颗高光：等落子 dropIn 动画(1s)结束再开始，避免 .dropping 覆盖 .winned 动画
-  // 全部揭示完后再延迟一小段，让玩家看清四连，最后才弹胜利面板
+  // 连线后逐条逐颗高光：等落子 dropIn 动画(1s)结束再开始，避免 .dropping 覆盖 .winned 动画
+  // 多线胜利时按 winLines 顺序播放，每条线之间额外停顿 lineDelay；共享棋子（通常是刚下的子）
+  // 只揭示一次以免动画卡顿。全部揭示完延迟一小段才弹胜利面板。
   useEffect(() => {
     if (state.winner === undefined) {
-      setWinRevealCount(0);
+      setRevealedWinPoints([]);
       setWinnerPanelVisible(false);
       return;
     }
-    if (state.winner === 3 || !state.winPoints) {
+    if (state.winner === 3 || !state.winLines || state.winLines.length === 0) {
       // 平局没有连线可揭，直接出面板
       setWinnerPanelVisible(true);
       return;
     }
-    setWinRevealCount(0);
+    setRevealedWinPoints([]);
     setWinnerPanelVisible(false);
-    const total = state.winPoints.length;
+
     const startDelay = 1050;
     const stepDelay = 180;
+    const lineDelay = 350;
     const panelDelay = 200;
+
+    const seen = new Set<string>();
     const timers: number[] = [];
-    for (let i = 1; i <= total; i++) {
-      timers.push(
-        window.setTimeout(() => setWinRevealCount(i), startDelay + (i - 1) * stepDelay)
-      );
+    let t = startDelay;
+    let lastTickTime = startDelay;
+    let anyTick = false;
+
+    for (let li = 0; li < state.winLines.length; li++) {
+      const line = state.winLines[li]!;
+      let scheduledInLine = false;
+      for (const point of line) {
+        const key = `${point[0]},${point[1]}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const at = t;
+        timers.push(
+          window.setTimeout(() => {
+            setRevealedWinPoints((prev) => [...prev, point]);
+          }, at)
+        );
+        lastTickTime = at;
+        t = at + stepDelay;
+        scheduledInLine = true;
+        anyTick = true;
+      }
+      if (li < state.winLines.length - 1 && scheduledInLine) {
+        t = lastTickTime + lineDelay;
+      }
     }
+
     timers.push(
       window.setTimeout(
         () => setWinnerPanelVisible(true),
-        startDelay + (total - 1) * stepDelay + panelDelay
+        (anyTick ? lastTickTime : startDelay) + panelDelay
       )
     );
-    return () => timers.forEach((t) => clearTimeout(t));
-  }, [state.winner, state.winPoints]);
+    return () => timers.forEach((c) => clearTimeout(c));
+  }, [state.winner, state.winLines]);
 
   // 面板出现时再播放胜利音效 + 头像升级（让玩家先看完高光动画再庆祝）
   // 升级延迟 600ms：让旧头像先出现，之后再触发高光切换动画，避免瞬间变换
@@ -237,11 +263,6 @@ export default function GameContainer({
     : !localWantsReset && remoteWantsReset
     ? "peer-waiting"
     : "idle";
-
-  const revealedWinPoints = useMemo(() => {
-    if (!state.winPoints) return undefined;
-    return state.winPoints.slice(0, winRevealCount);
-  }, [state.winPoints, winRevealCount]);
 
   return (
     <GameView

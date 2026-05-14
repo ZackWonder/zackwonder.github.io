@@ -4,7 +4,7 @@ import {
   createEmptyBoard,
   dropInColumn,
   linePoints,
-  isLine4,
+  findWinLines,
   createInitialState,
   applyMove,
   applyReset,
@@ -41,35 +41,48 @@ describe("dropInColumn", () => {
   });
 });
 
-describe("isLine4", () => {
+describe("findWinLines", () => {
   it("detects 4 in a row horizontally", () => {
     const board = createEmptyBoard();
     for (let i = 0; i < 4; i++) board[i]![0] = constants.PLAYER_A;
-    expect(isLine4(board, 3, 0)).toBeDefined();
+    const lines = findWinLines(board, 3, 0);
+    expect(lines).toHaveLength(1);
+    expect(lines![0]).toHaveLength(4);
   });
 
   it("detects 4 in a row vertically", () => {
     const board = createEmptyBoard();
     for (let j = 0; j < 4; j++) board[0]![j] = constants.PLAYER_A;
-    expect(isLine4(board, 0, 3)).toBeDefined();
+    expect(findWinLines(board, 0, 3)).toHaveLength(1);
   });
 
   it("detects 4 in a row diagonal /", () => {
     const board = createEmptyBoard();
     for (let k = 0; k < 4; k++) board[k]![k] = constants.PLAYER_A;
-    expect(isLine4(board, 3, 3)).toBeDefined();
+    expect(findWinLines(board, 3, 3)).toHaveLength(1);
   });
 
   it("detects 4 in a row diagonal \\\\", () => {
     const board = createEmptyBoard();
     for (let k = 0; k < 4; k++) board[k]![3 - k] = constants.PLAYER_A;
-    expect(isLine4(board, 3, 0)).toBeDefined();
+    expect(findWinLines(board, 3, 0)).toHaveLength(1);
   });
 
   it("returns undefined when there's no line of 4", () => {
     const board = createEmptyBoard();
     board[0]![0] = constants.PLAYER_A;
-    expect(isLine4(board, 0, 0)).toBeUndefined();
+    expect(findWinLines(board, 0, 0)).toBeUndefined();
+  });
+
+  it("detects multiple winning lines through the same point", () => {
+    // Horizontal + diagonal / through (3, 3)
+    const board = createEmptyBoard();
+    // horizontal at row 3: (0,3) (1,3) (2,3) (3,3) (4,3)
+    for (let i = 0; i <= 4; i++) board[i]![3] = constants.PLAYER_A;
+    // diagonal /: (0,0) (1,1) (2,2) (3,3)
+    for (let k = 0; k < 3; k++) board[k]![k] = constants.PLAYER_A;
+    const lines = findWinLines(board, 3, 3);
+    expect(lines).toHaveLength(2);
   });
 });
 
@@ -109,7 +122,7 @@ describe("applyMove", () => {
     s = applyMove(s, 2);
     s = applyMove(s, 3);
     expect(s.winner).toBe(constants.PLAYER_A);
-    expect(s.winPoints).toBeDefined();
+    expect(s.winLines).toBeDefined();
   });
 
   it("locks the board after a winner is set", () => {
