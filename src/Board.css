@@ -44,23 +44,28 @@
 
 @keyframes dropIn {
   0% {
-    transform: translateY(calc(var(--drop-rows) * -60px));
+    transform: translateY(calc(var(--drop-rows) * -75px));
+    animation-timing-function: linear;
+  }
+  30% {
+    transform: translateY(calc(var(--drop-rows) * -75px));
     animation-timing-function: ease-in;
   }
-  55% {
+  65% {
     transform: translateY(0);
     animation-timing-function: ease-out;
   }
-  72% {
-    transform: translateY(-12px);
+  78% {
+    transform: translateY(-22px);
     animation-timing-function: ease-in;
   }
-  87% {
+  88% {
     transform: translateY(0);
     animation-timing-function: ease-out;
   }
-  95% {
-    transform: translateY(-3px);
+  94% {
+    transform: translateY(-8px);
+    animation-timing-function: ease-in;
   }
   100% {
     transform: translateY(0);
@@ -68,7 +73,7 @@
 }
 
 .square.dropping {
-  animation: dropIn 0.5s ease-in both;
+  animation: dropIn 1s both;
 }
 
 @keyframes winAni {

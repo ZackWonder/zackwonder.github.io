@@ -95,6 +95,36 @@
   display: none;
 }
 
+.crown.crown-flash {
+  animation:
+    vibrate 0.3s linear infinite both,
+    crown-level-up 0.9s ease-out;
+}
+
+@keyframes crown-level-up {
+  0% {
+    filter: brightness(2.6) saturate(1.4);
+    box-shadow:
+      0 0 0 8px rgba(255, 255, 255, 0.7),
+      0 0 48px 20px rgba(255, 224, 102, 0.9);
+    transform: scale(1.2);
+  }
+  35% {
+    filter: brightness(1.6) saturate(1.2);
+    box-shadow:
+      0 0 0 5px rgba(255, 255, 255, 0.4),
+      0 0 32px 12px rgba(255, 224, 102, 0.55);
+    transform: scale(1.08);
+  }
+  100% {
+    filter: brightness(1);
+    box-shadow:
+      0 0 0 0 rgba(255, 255, 255, 0),
+      0 0 0 0 rgba(255, 224, 102, 0);
+    transform: scale(1);
+  }
+}
+
 .App-header button:not(.square):not(.crown) {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -116,6 +146,24 @@
   top: 16px;
   right: 16px;
   z-index: 100;
+}
+
+.turn-indicator {
+  font-weight: 600;
+}
+
+.turn-mine {
+  color: #fd6666;
+  animation: turn-mine-blink 1s ease-in-out infinite;
+}
+
+.turn-theirs {
+  color: #ffffff;
+}
+
+@keyframes turn-mine-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 
 .game-status-screen {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import GameContainer from "./game/GameContainer";
 import type { GameContainerTransport } from "./game/GameContainer";
+import type { GameState } from "./game/types";
 import InviteModal from "./p2p/InviteModal";
 import {
   useHostPeer,
@@ -53,7 +54,7 @@ export default function GameApp() {
               className="p2p-fab"
               onClick={() => setMode({ kind: "host" })}
             >
-              🔗 P2P 对战
+              🔗 对战
             </button>
           ) : null
         }
@@ -152,11 +153,13 @@ function BrokerHostFlow({
     <>
       <GameContainer
         transport={transport}
-        topBanner={
+        topBanner={(state) =>
           hostRole && hasConnectedOnce ? (
             <ConnectionBanner
               localRole={hostRole}
               status={host.status}
+              aTurn={state.aTurn}
+              winner={state.winner}
               onLeave={onLeave}
             />
           ) : null
@@ -218,11 +221,13 @@ function ManualHostFlow({ hostRole, onBackToBroker, onLeave }: ManualHostFlowPro
     <>
       <GameContainer
         transport={transport}
-        topBanner={
+        topBanner={(state) =>
           host.status === "connected" || host.status === "disconnected" ? (
             <ConnectionBanner
               localRole={hostRole}
               status={host.status}
+              aTurn={state.aTurn}
+              winner={state.winner}
               onLeave={onLeave}
             />
           ) : null
@@ -287,9 +292,15 @@ function JoinerFlow({ remotePeerId, role, onLeave }: JoinerFlowProps) {
   return (
     <GameContainer
       transport={transport}
-      topBanner={
-        <ConnectionBanner localRole={role} status={join.status} onLeave={onLeave} />
-      }
+      topBanner={(state) => (
+        <ConnectionBanner
+          localRole={role}
+          status={join.status}
+          aTurn={state.aTurn}
+          winner={state.winner}
+          onLeave={onLeave}
+        />
+      )}
     />
   );
 }
@@ -380,9 +391,15 @@ function ManualJoinerFlow({ encodedOffer, role, onLeave }: ManualJoinerFlowProps
   return (
     <GameContainer
       transport={transport}
-      topBanner={
-        <ConnectionBanner localRole={role} status={join.status} onLeave={onLeave} />
-      }
+      topBanner={(state) => (
+        <ConnectionBanner
+          localRole={role}
+          status={join.status}
+          aTurn={state.aTurn}
+          winner={state.winner}
+          onLeave={onLeave}
+        />
+      )}
     />
   );
 }
@@ -405,12 +422,21 @@ function useTransport(
 interface ConnectionBannerProps {
   localRole: PlayerRole;
   status: string;
+  aTurn: boolean;
+  winner: GameState["winner"];
   onLeave: () => void;
 }
 
-function ConnectionBanner({ localRole, status, onLeave }: ConnectionBannerProps) {
-  const colorText = localRole === "A" ? "蓝方" : "红方";
+function ConnectionBanner({
+  localRole,
+  status,
+  aTurn,
+  winner,
+  onLeave,
+}: ConnectionBannerProps) {
   const disconnected = status === "disconnected" || status === "failed";
+  const isLocalTurn = aTurn === (localRole === "A");
+  const showTurn = !disconnected && winner === undefined;
   return (
     <>
       <div
@@ -421,6 +447,7 @@ function ConnectionBanner({ localRole, status, onLeave }: ConnectionBannerProps)
           background: disconnected ? "rgba(229,115,115,0.18)" : "transparent",
           borderRadius: 6,
           color: disconnected ? "#e57373" : "inherit",
+          minHeight: 20,
         }}
       >
         <span
@@ -433,7 +460,15 @@ function ConnectionBanner({ localRole, status, onLeave }: ConnectionBannerProps)
             marginRight: 6,
           }}
         />
-        {disconnected ? "对方已断开" : `P2P 对战中 | 你是 ${colorText}`}
+        {disconnected ? (
+          "对方已断开"
+        ) : showTurn ? (
+          isLocalTurn ? (
+            <span className="turn-indicator turn-mine">轮到你了</span>
+          ) : (
+            <span className="turn-indicator turn-theirs">轮到对方</span>
+          )
+        ) : null}
       </div>
       <button className="p2p-fab" onClick={onLeave}>
         返回单机

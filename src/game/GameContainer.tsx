@@ -56,7 +56,7 @@ export interface GameContainerTransport {
 export interface GameContainerProps {
   extraControls?: React.ReactNode;
   renderExtraControls?: (state: GameState) => React.ReactNode;
-  topBanner?: React.ReactNode;
+  topBanner?: React.ReactNode | ((state: GameState) => React.ReactNode);
   transport?: GameContainerTransport;
 }
 
@@ -100,22 +100,27 @@ export default function GameContainer({
   }, [notice]);
 
   // 落子后处理胜利音效 + 头像升级（observe 模式：在 state.winner 变化时触发）
+  // 升级延迟 600ms：让旧头像先出现，之后再触发高光切换动画，避免瞬间变换
   useEffect(() => {
     if (state.winner === undefined) return;
     playWinSound(state.winner);
     if (state.winner === 3) return;
+    const winner = state.winner;
     const slotA: AvatarSlot = { name: "tanson", level: aLevel, setLevel: setALevel };
     const slotB: AvatarSlot = { name: "sherly", level: bLevel, setLevel: setBLevel };
-    if (state.winner === constants.PLAYER_A) void tryUpgradeOrReset(slotA, slotB);
-    else void tryUpgradeOrReset(slotB, slotA);
+    const t = setTimeout(() => {
+      if (winner === constants.PLAYER_A) void tryUpgradeOrReset(slotA, slotB);
+      else void tryUpgradeOrReset(slotB, slotA);
+    }, 600);
+    return () => clearTimeout(t);
   }, [state.winner]); // 故意只 watch winner
 
-  // 清掉 droppingCell 的动画状态
+  // 清掉 droppingCell 的动画状态（与 Board.css 的 dropIn 1s 时长对齐）
   useEffect(() => {
     if (state.droppingCell === null) return;
     const t = setTimeout(() => {
       setState((s) => (s.droppingCell ? { ...s, droppingCell: null } : s));
-    }, 400);
+    }, 1000);
     return () => clearTimeout(t);
   }, [state.droppingCell]);
 
@@ -191,7 +196,7 @@ export default function GameContainer({
       onPlayAgain={handlePlayAgain}
       onUndo={transport ? undefined : handleUndo}
       extraControls={renderExtraControls ? renderExtraControls(state) : extraControls}
-      topBanner={topBanner}
+      topBanner={typeof topBanner === "function" ? topBanner(state) : topBanner}
       notice={notice}
       playAgainState={playAgainState}
     />

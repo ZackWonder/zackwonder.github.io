@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Board from "../Board";
 import PlayAffect from "../effect";
 import constants from "../constants";
@@ -9,6 +9,8 @@ export type PlayAgainState = "idle" | "waiting-peer" | "peer-waiting";
 
 interface CrownProps {
   value: Winner | undefined;
+  aLevel: number;
+  bLevel: number;
   handlePlayAgain: () => void;
   playAgainState: PlayAgainState;
 }
@@ -35,7 +37,32 @@ function PlayAgainButton({
   );
 }
 
-function Crown({ value, handlePlayAgain, playAgainState }: CrownProps) {
+function Crown({ value, aLevel, bLevel, handlePlayAgain, playAgainState }: CrownProps) {
+  const winningLevel =
+    value === constants.PLAYER_A ? aLevel : value === constants.PLAYER_B ? bLevel : null;
+  const lastSeenLevelRef = useRef<number | null>(null);
+  const [flashing, setFlashing] = useState(false);
+
+  // 当胜方等级改变时触发高光切换动画；首次出现仅记录基线，不闪烁
+  useEffect(() => {
+    if (!value) {
+      lastSeenLevelRef.current = null;
+      setFlashing(false);
+      return;
+    }
+    if (winningLevel === null) return;
+    if (lastSeenLevelRef.current === null) {
+      lastSeenLevelRef.current = winningLevel;
+      return;
+    }
+    if (lastSeenLevelRef.current !== winningLevel) {
+      lastSeenLevelRef.current = winningLevel;
+      setFlashing(true);
+      const t = setTimeout(() => setFlashing(false), 900);
+      return () => clearTimeout(t);
+    }
+  }, [value, winningLevel]);
+
   useEffect(() => {
     if (value) {
       const btn = document.querySelector(".crownSpan");
@@ -46,7 +73,8 @@ function Crown({ value, handlePlayAgain, playAgainState }: CrownProps) {
   if (!value) return null;
 
   if (value !== 3) {
-    const cn = value === constants.PLAYER_A ? "playerA crown" : "playerB crown";
+    const baseCn = value === constants.PLAYER_A ? "playerA crown" : "playerB crown";
+    const cn = flashing ? `${baseCn} crown-flash` : baseCn;
     return (
       <div className="crownDiv">
         <span className="crownSpan">
@@ -117,6 +145,8 @@ export default function GameView({
         {topBanner}
         <Crown
           value={state.winner}
+          aLevel={aLevel}
+          bLevel={bLevel}
           handlePlayAgain={onPlayAgain}
           playAgainState={playAgainState}
         />
