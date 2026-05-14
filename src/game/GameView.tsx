@@ -137,8 +137,14 @@ export default function GameView({
             </div>
           )}
         </div>
-        <hr />
-        {!state.winner && onUndo && <button onClick={onUndo}>悔棋</button>}
+        {onUndo && (
+          <button
+            onClick={onUndo}
+            style={{ visibility: state.winner ? "hidden" : "visible" }}
+          >
+            悔棋
+          </button>
+        )}
         {extraControls}
       </header>
     </div>
