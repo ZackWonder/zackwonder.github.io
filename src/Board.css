@@ -91,6 +91,11 @@
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
+  /* 所有格子常驻独立 GPU 图层，避免下子那一刻才创建图层导致首帧卡顿 */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .square:hover {
@@ -189,9 +194,6 @@
 
 .square.dropping {
   animation: dropIn 1s both;
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
 @keyframes winAni {

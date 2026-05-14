@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { memo, useCallback, useRef } from "react";
 import "./Board.css";
 import constants, { type Player } from "./constants";
 import useSound from "./useSound";
@@ -9,11 +9,23 @@ interface SquareProps {
   isLastStep: boolean;
   isDropping: boolean;
   dropRows: number;
-  aTurn: boolean;
-  onClick: () => void;
+  col: number;
+  onColumnClick: (col: number) => void;
+  playActive: () => void;
+  playPointerUp: () => void;
 }
 
-function Square({ value, winned, isLastStep, isDropping, dropRows, aTurn, onClick }: SquareProps) {
+const Square = memo(function Square({
+  value,
+  winned,
+  isLastStep,
+  isDropping,
+  dropRows,
+  col,
+  onColumnClick,
+  playActive,
+  playPointerUp,
+}: SquareProps) {
   let cn = "square";
   if (value !== undefined) {
     cn += value === constants.PLAYER_A ? " playerA" : " playerB";
@@ -25,13 +37,6 @@ function Square({ value, winned, isLastStep, isDropping, dropRows, aTurn, onClic
     }
   }
 
-  const [playActive] = useSound("./pop-down.mp3", { volume: 0.25 });
-  const [playOn] = useSound("./pop-up-on.mp3", { volume: 0.25 });
-  const [playOff] = useSound("./pop-up-off.mp3", { volume: 0.25 });
-
-  // WeChat's WebView (X5) often intercepts touch as scroll before click fires.
-  // Trigger the move directly on pointerdown for touch and suppress the
-  // synthesized click. Mouse/keyboard still use the regular click handler.
   const touchFiredRef = useRef(false);
 
   return (
@@ -44,24 +49,21 @@ function Square({ value, winned, isLastStep, isDropping, dropRows, aTurn, onClic
           playActive();
           if (e.pointerType === "touch") {
             touchFiredRef.current = true;
-            onClick();
+            onColumnClick(col);
           }
         }}
-        onPointerUp={() => {
-          if (aTurn) playOn();
-          else playOff();
-        }}
+        onPointerUp={playPointerUp}
         onClick={() => {
           if (touchFiredRef.current) {
             touchFiredRef.current = false;
             return;
           }
-          onClick();
+          onColumnClick(col);
         }}
       ></button>
     </span>
   );
-}
+});
 
 type Point = [number, number];
 
@@ -73,7 +75,7 @@ interface BoardProps {
   droppingCell: Point | null;
   aTurn: boolean;
   winPoints: Point[] | undefined;
-  onClick: (i: number, j: number) => void;
+  onClick: (col: number) => void;
 }
 
 export default function Board({
@@ -86,6 +88,20 @@ export default function Board({
   winPoints,
   onClick,
 }: BoardProps) {
+  // Sounds hoisted out of Square: 1 Audio per sound (was 49 × 3 = 147)
+  const [playActive] = useSound("./pop-down.mp3", { volume: 0.25 });
+  const [playOn] = useSound("./pop-up-on.mp3", { volume: 0.25 });
+  const [playOff] = useSound("./pop-up-off.mp3", { volume: 0.25 });
+
+  // aTurn 变化时若直接当 Square 的 prop，每步都会让全部 49 颗格子失效重渲染。
+  // 用 ref 持有最新值，让 onPointerUp callback 引用稳定，memo 才能跳过未变化的格子。
+  const aTurnRef = useRef(aTurn);
+  aTurnRef.current = aTurn;
+  const playPointerUp = useCallback(() => {
+    if (aTurnRef.current) playOn();
+    else playOff();
+  }, [playOn, playOff]);
+
   const rows = [];
   for (let row = h - 1; row >= 0; --row) {
     const cols = [];
@@ -108,8 +124,10 @@ export default function Board({
           isLastStep={isLastStep}
           isDropping={isDropping}
           dropRows={constants.HEIGHT - 1 - row}
-          aTurn={aTurn}
-          onClick={() => onClick(col, row)}
+          col={col}
+          onColumnClick={onClick}
+          playActive={playActive}
+          playPointerUp={playPointerUp}
         />
       );
     }

@@ -101,7 +101,8 @@ export default function GameContainer({
     return () => clearTimeout(t);
   }, [notice]);
 
-  // 预加载当前等级 + 下一等级的头像图，避免落子动画期间图片还在请求中显示空白
+  // 预加载并预解码当前等级 + 下一等级的头像图：仅 img.src 只下载不解码，
+  // 首次绘制时主线程同步解码 JPG 会让落子那一帧掉帧。img.decode() 强制提前解码到 idle 时段
   useEffect(() => {
     const urls = [
       `/tanson_${aLevel}.jpg`,
@@ -112,6 +113,7 @@ export default function GameContainer({
     for (const url of urls) {
       const img = new Image();
       img.src = url;
+      void img.decode?.().catch(() => {});
     }
   }, [aLevel, bLevel]);
 

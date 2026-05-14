@@ -5,13 +5,19 @@ export default function useSound(
   options?: { volume?: number }
 ): [() => void] {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const volume = options?.volume ?? 1;
 
   const play = useCallback(() => {
-    const audio = new Audio(url);
-    audio.volume = options?.volume ?? 1;
+    let audio = audioRef.current;
+    if (!audio) {
+      audio = new Audio(url);
+      audio.volume = volume;
+      audioRef.current = audio;
+    } else {
+      audio.currentTime = 0;
+    }
     audio.play().catch(() => {});
-    audioRef.current = audio;
-  }, [url, options?.volume]);
+  }, [url, volume]);
 
   return [play];
 }

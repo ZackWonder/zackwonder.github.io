@@ -163,7 +163,7 @@ export default function GameView({
           droppingCell={state.droppingCell}
           aTurn={state.aTurn}
           winPoints={revealedWinPoints}
-          onClick={(i) => onColumnClick(i)}
+          onClick={onColumnClick}
         />
         <div className="game-notice-slot">
           {notice && (
