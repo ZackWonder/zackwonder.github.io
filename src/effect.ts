@@ -58,23 +58,38 @@ function createParticleAtPoint(
   particles.push(particle);
 }
 
+let particleCanvas: HTMLCanvasElement | undefined;
 let particleCtx: CanvasRenderingContext2D | undefined;
 
-function createParticleCanvas() {
-  const particleCanvas = document.createElement("canvas");
-  const ctx = particleCanvas.getContext("2d");
+// 必须只建一次并重用：每次 new 一个 canvas 会把全局 particleCtx 切到新 ctx，
+// 旧 canvas 失去 clearRect 调用就会把"最后一帧粒子"永久冻结在屏幕上（平局时双 disc
+// 各跑一次此函数即触发此 bug，旧 canvas 上 tanson 的像素肖像变成糊脸残影）
+function ensureParticleCanvas() {
+  if (particleCanvas && document.body.contains(particleCanvas)) {
+    if (
+      particleCanvas.width !== window.innerWidth ||
+      particleCanvas.height !== window.innerHeight
+    ) {
+      particleCanvas.width = window.innerWidth;
+      particleCanvas.height = window.innerHeight;
+    }
+    return;
+  }
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
   if (!ctx) return;
+  particleCanvas = canvas;
   particleCtx = ctx;
 
-  particleCanvas.width = window.innerWidth;
-  particleCanvas.height = window.innerHeight;
-  particleCanvas.style.position = "absolute";
-  particleCanvas.style.top = "0";
-  particleCanvas.style.left = "0";
-  particleCanvas.style.zIndex = "1001";
-  particleCanvas.style.pointerEvents = "none";
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.position = "absolute";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.zIndex = "1001";
+  canvas.style.pointerEvents = "none";
 
-  document.body.appendChild(particleCanvas);
+  document.body.appendChild(canvas);
 }
 
 function update() {
@@ -157,7 +172,7 @@ async function emitParticlesFor(disc: HTMLElement): Promise<void> {
     return;
   }
 
-  createParticleCanvas();
+  ensureParticleCanvas();
 
   const reductionFactor = 17;
   const liveBcr = disc.getBoundingClientRect();
