@@ -104,17 +104,31 @@ window.requestAnimationFrame(update);
 
 export default function PlayAffect(btn: HTMLElement) {
   html2canvas(btn).then((canvas) => {
-    const ctx = canvas.getContext("2d");
+    // html2canvas is async; by the time it resolves the button may have
+    // been unmounted (e.g. user hit "再玩一次"). Bail out instead of
+    // calling getImageData with a zero-sized region.
+    if (!btn.isConnected) return;
+    const width = canvas.width;
+    const height = canvas.height;
+    if (width === 0 || height === 0) return;
+
+    // html2canvas creates its own 2D context without the willReadFrequently
+    // hint, so reading from it spams a Chrome warning. Copy the bitmap onto
+    // a fresh canvas where we can set the hint up-front.
+    const readCanvas = document.createElement("canvas");
+    readCanvas.width = width;
+    readCanvas.height = height;
+    const ctx = readCanvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
+    ctx.drawImage(canvas, 0, 0);
 
     createParticleCanvas();
 
     const reductionFactor = 17;
-    const width = btn.offsetWidth;
-    const height = btn.offsetHeight;
     const colorData = ctx.getImageData(0, 0, width, height).data;
 
     let count = 0;
+    const bcr = btn.getBoundingClientRect();
 
     for (let localX = 0; localX < width; localX++) {
       for (let localY = 0; localY < height; localY++) {
@@ -122,7 +136,6 @@ export default function PlayAffect(btn: HTMLElement) {
           const index = (localY * width + localX) * 4;
           const rgbaColorArr = colorData.slice(index, index + 4);
 
-          const bcr = btn.getBoundingClientRect();
           const globalX = bcr.left + localX;
           const globalY = bcr.top + localY;
 
