@@ -40,7 +40,8 @@ export default function GameApp() {
   });
 
   const handleLeave = useCallback(() => {
-    history.replaceState(null, "", "#game");
+    const baseHash = window.location.hash.startsWith("#play") ? "#play" : "#game";
+    history.replaceState(null, "", baseHash);
     setMode({ kind: "single" });
   }, []);
 
