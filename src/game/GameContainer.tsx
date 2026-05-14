@@ -133,9 +133,9 @@ export default function GameContainer({
     setWinnerPanelVisible(false);
 
     const startDelay = 1050;
-    const stepDelay = 180;
-    const lineDelay = 350;
-    const panelDelay = 200;
+    const stepDelay = 288;
+    const lineDelay = 560;
+    const panelDelay = 320;
 
     const seen = new Set<string>();
     const timers: number[] = [];
