@@ -1,7 +1,7 @@
 export const ICE_SERVERS: RTCIceServer[] = [
+  { urls: "stun:stun.cloudflare.com:3478" },
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
-  { urls: "stun:stun.cloudflare.com:3478" },
   {
     urls: "turn:openrelay.metered.ca:80",
     username: "openrelayproject",
