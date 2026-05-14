@@ -128,36 +128,39 @@
 
 @keyframes dropIn {
   0% {
-    transform: translateY(calc(var(--drop-rows) * var(--row-pitch) * -1.1));
+    transform: translate3d(0, calc(var(--drop-rows) * var(--row-pitch) * -1.1), 0);
     animation-timing-function: linear;
   }
   30% {
-    transform: translateY(calc(var(--drop-rows) * var(--row-pitch) * -1.1));
+    transform: translate3d(0, calc(var(--drop-rows) * var(--row-pitch) * -1.1), 0);
     animation-timing-function: ease-in;
   }
   65% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     animation-timing-function: ease-out;
   }
   78% {
-    transform: translateY(calc(var(--cell-size) * -0.36));
+    transform: translate3d(0, calc(var(--cell-size) * -0.36), 0);
     animation-timing-function: ease-in;
   }
   88% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     animation-timing-function: ease-out;
   }
   94% {
-    transform: translateY(calc(var(--cell-size) * -0.13));
+    transform: translate3d(0, calc(var(--cell-size) * -0.13), 0);
     animation-timing-function: ease-in;
   }
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 .square.dropping {
   animation: dropIn 1s both;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 @keyframes winAni {
