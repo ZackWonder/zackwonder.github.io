@@ -2,7 +2,6 @@
   display: flex;
   justify-content: center;
   padding: 16px 0 28px;
-  perspective: 900px;
   width: 100%;
   overflow: hidden;
 }
@@ -28,8 +27,6 @@
     inset 4px 0 8px rgba(0, 0, 0, 0.12),
     inset -4px 0 8px rgba(0, 0, 0, 0.12);
   position: relative;
-  transform: rotateX(4deg);
-  transform-style: preserve-3d;
 }
 
 .board-frame::before {
