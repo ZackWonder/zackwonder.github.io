@@ -1,5 +1,3 @@
-import html2canvas from "html2canvas";
-
 interface Particle {
   animationDuration: number;
   speed: { x: number; y: number };
@@ -102,47 +100,88 @@ function update() {
 }
 window.requestAnimationFrame(update);
 
-export default function PlayAffect(btn: HTMLElement) {
-  html2canvas(btn).then((canvas) => {
-    // html2canvas is async; by the time it resolves the button may have
-    // been unmounted (e.g. user hit "再玩一次"). Bail out instead of
-    // calling getImageData with a zero-sized region.
-    if (!btn.isConnected) return;
-    const width = canvas.width;
-    const height = canvas.height;
-    if (width === 0 || height === 0) return;
+function extractBgUrl(el: HTMLElement): string | null {
+  const bg = getComputedStyle(el).backgroundImage;
+  const match = bg.match(/url\(["']?(.+?)["']?\)/);
+  return match?.[1] ?? null;
+}
 
-    // html2canvas creates its own 2D context without the willReadFrequently
-    // hint, so reading from it spams a Chrome warning. Copy the bitmap onto
-    // a fresh canvas where we can set the hint up-front.
-    const readCanvas = document.createElement("canvas");
-    readCanvas.width = width;
-    readCanvas.height = height;
-    const ctx = readCanvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
-    ctx.drawImage(canvas, 0, 0);
-
-    createParticleCanvas();
-
-    const reductionFactor = 17;
-    const colorData = ctx.getImageData(0, 0, width, height).data;
-
-    let count = 0;
-    const bcr = btn.getBoundingClientRect();
-
-    for (let localX = 0; localX < width; localX++) {
-      for (let localY = 0; localY < height; localY++) {
-        if (count % reductionFactor === 0) {
-          const index = (localY * width + localX) * 4;
-          const rgbaColorArr = colorData.slice(index, index + 4);
-
-          const globalX = bcr.left + localX;
-          const globalY = bcr.top + localY;
-
-          createParticleAtPoint(globalX, globalY, rgbaColorArr);
+function loadImageOffscreen(
+  url: string,
+  w: number,
+  h: number
+): Promise<HTMLCanvasElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) {
+          resolve(null);
+          return;
         }
-        count++;
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas);
+      } catch {
+        resolve(null);
       }
-    }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
   });
+}
+
+async function emitParticlesFor(disc: HTMLElement): Promise<void> {
+  if (!disc.isConnected) return;
+  const bcr = disc.getBoundingClientRect();
+  const width = Math.round(bcr.width);
+  const height = Math.round(bcr.height);
+  if (width === 0 || height === 0) return;
+
+  const url = extractBgUrl(disc);
+  if (!url) return;
+
+  const canvas = await loadImageOffscreen(url, width, height);
+  if (!canvas || !disc.isConnected) return;
+
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return;
+
+  let colorData: Uint8ClampedArray;
+  try {
+    colorData = ctx.getImageData(0, 0, width, height).data;
+  } catch {
+    return;
+  }
+
+  createParticleCanvas();
+
+  const reductionFactor = 17;
+  const liveBcr = disc.getBoundingClientRect();
+
+  let count = 0;
+  for (let localX = 0; localX < width; localX++) {
+    for (let localY = 0; localY < height; localY++) {
+      if (count % reductionFactor === 0) {
+        const index = (localY * width + localX) * 4;
+        const rgbaColorArr = colorData.slice(index, index + 4);
+        const globalX = liveBcr.left + localX;
+        const globalY = liveBcr.top + localY;
+        createParticleAtPoint(globalX, globalY, rgbaColorArr);
+      }
+      count++;
+    }
+  }
+}
+
+export default function PlayAffect(btn: HTMLElement) {
+  // Find disc buttons inside (single winner: 1 button; tie: 2 buttons)
+  const discs = Array.from(btn.querySelectorAll<HTMLElement>("button"));
+  if (discs.length === 0) discs.push(btn);
+  for (const disc of discs) {
+    void emitParticlesFor(disc);
+  }
 }
