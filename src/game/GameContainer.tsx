@@ -99,6 +99,20 @@ export default function GameContainer({
     return () => clearTimeout(t);
   }, [notice]);
 
+  // 预加载当前等级 + 下一等级的头像图，避免落子动画期间图片还在请求中显示空白
+  useEffect(() => {
+    const urls = [
+      `/tanson_${aLevel}.jpg`,
+      `/sherly_${bLevel}.jpg`,
+      `/tanson_${aLevel + 1}.jpg`,
+      `/sherly_${bLevel + 1}.jpg`,
+    ];
+    for (const url of urls) {
+      const img = new Image();
+      img.src = url;
+    }
+  }, [aLevel, bLevel]);
+
   // 落子后处理胜利音效 + 头像升级（observe 模式：在 state.winner 变化时触发）
   // 升级延迟 600ms：让旧头像先出现，之后再触发高光切换动画，避免瞬间变换
   useEffect(() => {
